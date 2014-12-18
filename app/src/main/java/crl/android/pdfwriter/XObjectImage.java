@@ -50,14 +50,20 @@ public class XObjectImage {
     public XObjectImage(PDFDocument document, Bitmap bitmap, boolean isBinary) {
         mIsBinary = isBinary;
         mDocument = document;
-        if(!isBinary) {
-            mProcessedImage = processImage(configureBitmap(bitmap));
-            mId = Indentifiers.generateId(mProcessedImage);
+        if(isBinary) {
+            // Caution! This variable is static.
+            // even if there is only one binary image, we use best compression for ALL images.
+            // this is for backward compatibility of unit test.
+            COMPRESSION_LEVEL = Deflater.BEST_COMPRESSION;
+            
+            mProcessedBinaryImage = processBinaryImage(configureBitmap(bitmap));
+            mId = Indentifiers.generateId(mProcessedBinaryImage);
+
         }
         else
         {
-            mProcessedBinaryImage = processBinaryImage(configureBitmap(bitmap));
-            mId = Indentifiers.generateId(mProcessedBinaryImage);
+            mProcessedImage = processImage(configureBitmap(bitmap));
+            mId = Indentifiers.generateId(mProcessedImage);
         }
         mName = "/img" + (++mImageCount);
     }
