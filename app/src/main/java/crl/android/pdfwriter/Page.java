@@ -171,7 +171,7 @@ public class Page {
         os.write("\n");
 
         for(IndirectObject obj : mPageFonts) {
-            obj.writeToStream(os);
+            obj.writeToStreamAndPurge(os);
             os.write("\n");
         }
 

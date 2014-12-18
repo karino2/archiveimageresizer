@@ -114,8 +114,9 @@ public class IndirectObject extends Base {
     public void writeToStreamAndPurge(PositionedOutputStream os) throws IOException {
         writeToStream(os);
 
-        mDictionaryContent.clear();
-        mStreamContent.clear();
+        mDictionaryContent = null;
+        mStreamContent = null;
+        mContent = null;
     }
 
     public void writeToStream(PositionedOutputStream os) throws IOException {
