@@ -40,35 +40,66 @@ public class XObjectImage {
 	private String mName = "";
 	private String mId = "";
 	private String mProcessedImage = "";
+    private byte[] mProcessedBinaryImage;
+    private boolean mIsBinary;
 	
 	public XObjectImage(PDFDocument document, Bitmap bitmap) {
-		mDocument = document;
-		mProcessedImage = processImage(configureBitmap(bitmap));
-		mId = Indentifiers.generateId(mProcessedImage);
-		mName = "/img" + (++mImageCount);
+        this(document, bitmap, false);
 	}
 
-	
+    public XObjectImage(PDFDocument document, Bitmap bitmap, boolean isBinary) {
+        mIsBinary = isBinary;
+        mDocument = document;
+        if(!isBinary) {
+            mProcessedImage = processImage(configureBitmap(bitmap));
+            mId = Indentifiers.generateId(mProcessedImage);
+        }
+        else
+        {
+            mProcessedBinaryImage = processBinaryImage(configureBitmap(bitmap));
+            mId = Indentifiers.generateId(mProcessedBinaryImage);
+        }
+        mName = "/img" + (++mImageCount);
+    }
+
+    private String getFilter() {
+        if(mIsBinary)
+            return " /Filter [/FlateDecode]\n";
+        else
+            return " /Filter [/ASCII85Decode /FlateDecode]\n";
+    }
+
+    private int getImageLength()
+    {
+        if(mIsBinary)
+            return mProcessedBinaryImage.length;
+        return mProcessedImage.length();
+    }
+
 	public void appendToDocument() {
 		mIndirectObject = mDocument.newIndirectObject();
 		mDocument.includeIndirectObject(mIndirectObject);
 		mIndirectObject.addDictionaryContent(
 			" /Type /XObject\n" +
 			" /Subtype /Image\n" +
-			" /Filter [/ASCII85Decode /FlateDecode]\n" +
+			getFilter() +
 			" /Width " + mWidth + "\n" +
 			" /Height " + mHeight + "\n" +
 			" /BitsPerComponent " + Integer.toString(BITSPERCOMPONENT) + "\n" +
 			" /Interpolate " + Boolean.toString(INTERPOLATION) + "\n" +
 			" /ColorSpace " + DEVICE_RGB + "\n" +
-			" /Length " + mProcessedImage.length() + "\n"
+			" /Length " + getImageLength() + "\n"
 		);
-		mIndirectObject.addStreamContent(mProcessedImage);
+        if(mIsBinary)
+            mIndirectObject.setStreamContentBinary(mProcessedBinaryImage);
+        else
+    		mIndirectObject.addStreamContent(mProcessedImage);
 	}
 
     public void writeAndPurge(PositionedOutputStream os) throws IOException {
         mIndirectObject.writeToStreamAndPurge(os);
         mProcessedImage = "";
+        mProcessedBinaryImage = null;
     }
 	
 	private Bitmap configureBitmap(Bitmap bitmap) {
@@ -133,6 +164,16 @@ public class XObjectImage {
 		}
 		return "";
 	}
+
+    private byte[] processBinaryImage(Bitmap bitmap)
+    {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (deflateImageData(baos, getBitmapData(bitmap))) {
+            return baos.toByteArray();
+        }
+        return null;
+
+    }
 	
 	private String processImage(Bitmap bitmap) {
    	    ByteArrayOutputStream baos = new ByteArrayOutputStream();

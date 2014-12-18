@@ -17,23 +17,28 @@ public class Indentifiers {
 	private static char[] HexTable = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 	
 	private static final String calculateMd5(final String s) {
-        StringBuffer MD5Str = new StringBuffer();
-		try {
-	        MessageDigest MD5digester = java.security.MessageDigest.getInstance("MD5");
-	        MD5digester.update(s.getBytes());
-	        final byte binMD5[] = MD5digester.digest();
-	        final int len = binMD5.length;
-	        for (int i = 0; i < len; i++) {
-	        	MD5Str.append(HexTable[(binMD5[i] >> 4) & 0x0F]); // hi
-	        	MD5Str.append(HexTable[(binMD5[i] >> 0) & 0x0F]); // lo
-	        }
-	    } catch (Exception e) {
-			e.printStackTrace();
-	    }
-	    return MD5Str.toString();
+        byte[] bytes = s.getBytes();
+        return calculateMd5(bytes);
 	}
 
-	private static String encodeDate(Date date){
+    private static String calculateMd5(byte[] bytes) {
+        StringBuffer MD5Str = new StringBuffer();
+        try {
+MessageDigest MD5digester = MessageDigest.getInstance("MD5");
+MD5digester.update(bytes);
+final byte binMD5[] = MD5digester.digest();
+final int len = binMD5.length;
+for (int i = 0; i < len; i++) {
+                MD5Str.append(HexTable[(binMD5[i] >> 4) & 0x0F]); // hi
+                MD5Str.append(HexTable[(binMD5[i] >> 0) & 0x0F]); // lo
+}
+} catch (Exception e) {
+            e.printStackTrace();
+}
+        return MD5Str.toString();
+    }
+
+    private static String encodeDate(Date date){
 		Calendar c = GregorianCalendar.getInstance();
 		c.setTime(date);
 		int year = c.get(Calendar.YEAR);
@@ -58,4 +63,7 @@ public class Indentifiers {
 	public static String generateId(String data) {
 		return calculateMd5(data);
 	}
+    public static String generateId(byte[] data) {
+        return calculateMd5(data);
+    }
 }

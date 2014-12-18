@@ -74,6 +74,12 @@ public class EnclosedContent extends Base {
 		return mBegin + mContent.toString() + mEnd;
 	}
 
+    public void writePDFString(PositionedOutputStream os) throws IOException {
+        writeBegin(os);
+        os.write(mContent.toString());
+        writeEnd(os);
+    }
+
     public void writeBegin(PositionedOutputStream os) throws IOException {
         os.write(mBegin);
     }

@@ -174,8 +174,11 @@ public class PDFWriter {
     }
 
     public void writeImagePage(Bitmap bitmap) throws IOException {
+        writeImagePage(bitmap, false);
+    }
+    public void writeImagePage(Bitmap bitmap, boolean isBinary) throws IOException {
         Page page = mCurrentPage;
-        final XObjectImage xImage = new XObjectImage(mDocument, bitmap);
+        final XObjectImage xImage = new XObjectImage(mDocument, bitmap, isBinary);
 
         page.writeImagePageAndPurgeImage(mOutputStream, mPagesRef,
                 0, 0, bitmap.getWidth(), bitmap.getHeight(), xImage, Transformation.DEGREES_0_ROTATION);

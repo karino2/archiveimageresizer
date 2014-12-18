@@ -82,7 +82,7 @@ public class ZipConverter {
             writer.newOrphanPage();
 
         currentPage++;
-        writer.writeImagePage(resizedBmp);
+        writer.writeImagePage(resizedBmp, true);
         resizedBmp = null;
 
         // System.gc();

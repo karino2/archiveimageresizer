@@ -88,6 +88,10 @@ public class IndirectObject extends Base {
 		mStreamContent.addContent(Value);		
 	}
 
+    public void setStreamContentBinary(byte[] content) {
+        mStreamContent.setBinaryContent(content);
+    }
+
 	public void setStreamContent(String Value) {
 		mStreamContent.setContent(Value);		
 	}
@@ -110,7 +114,6 @@ public class IndirectObject extends Base {
 		return sb.toString();
 	}
 
-    // TODO: stream-ize
     public void writeToStreamAndPurge(PositionedOutputStream os) throws IOException {
         writeToStream(os);
 
@@ -121,8 +124,17 @@ public class IndirectObject extends Base {
 
     public void writeToStream(PositionedOutputStream os) throws IOException {
         mByteOffset = os.getPos();
-        String content = render();
-        os.write(content);
+
+        os.write(mID.toPDFString());
+        os.write(" ");
+        mContent.writeBegin(os);
+        if (mDictionaryContent.hasContent()) {
+            mDictionaryContent.writePDFString(os);
+            if (mStreamContent.hasContent()) {
+                mStreamContent.writePDFString(os);
+            }
+        }
+        mContent.writeEnd(os);
     }
 
     @Override
