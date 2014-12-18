@@ -6,13 +6,14 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.test.ApplicationTestCase;
-import android.test.suitebuilder.annotation.LargeTest;
-import android.test.suitebuilder.annotation.SmallTest;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
 import crl.android.pdfwriter.PDFWriter;
+import crl.android.pdfwriter.PositionedOutputStream;
+import crl.android.pdfwriter.XObjectImage;
 
 /**
  * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>
@@ -22,6 +23,11 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         super(Application.class);
     }
 
+    @Override
+    protected void tearDown() throws Exception {
+        XObjectImage.RESET_IMAGE_COUNT();
+        super.tearDown();
+    }
 
     Context testContext;
     public void setTestContext(Context tstContext) {
@@ -39,6 +45,28 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         assertTrue(match("  /ID .*", "  /ID [<649FD939DDE9E17D1D51A96D05FC5AEB> <649FD939DDE9E17D1D51A96D05FC5AEB>]\n"));
     }
 
+    public void testPdfWriterStream() throws IOException {
+        AssetManager am = testContext.getAssets();
+        Bitmap starImg = BitmapFactory.decodeStream(am.open("CRL-star.jpg"));
+        Bitmap bmpImg = BitmapFactory.decodeStream(am.open("CRL-24bits.bmp"));
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        PDFWriter writer = new PDFWriter(800, 600, outputStream);
+        writer.writeHeader();
+        writer.writeCatalogStream();
+        writer.writePagesHeader(2);
+
+        writer.writeImagePage(starImg);
+        writer.newPageWithoutRender();
+        writer.writeImagePage(bmpImg);
+
+        writer.writeFooter();
+
+        String actual = outputStream.toString("ISO-8859-1");
+        verifyLiteralResult(actual);
+    }
+
     public void testPdfWriterTwoImage() throws IOException {
         AssetManager am = testContext.getAssets();
         Bitmap starImg = BitmapFactory.decodeStream(am.open("CRL-star.jpg"));
@@ -50,7 +78,10 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         writer.addImage(0, 0, bmpImg);
 
         String actual = writer.asString();
+        verifyLiteralResult(actual);
+    }
 
+    private void verifyLiteralResult(String actual) {
         String expectUntilID = getExpectUntilID();
         assertEquals(expectUntilID, actual.substring(0, expectUntilID.length()));
 

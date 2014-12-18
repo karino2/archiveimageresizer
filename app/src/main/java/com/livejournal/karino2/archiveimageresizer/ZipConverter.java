@@ -22,28 +22,54 @@ public class ZipConverter {
     PDFWriter writer;
     ConversionSetting setting;
     File output;
+    int pageNum;
+    FileOutputStream outputStream;
 
-    public void startConversion(ConversionSetting convSetting, ZipFile inputFile, File outFile) {
+    public void startConversion(ConversionSetting convSetting, ZipFile inputFile, File outFile) throws IOException {
         input = inputFile;
         setting = convSetting;
-        writer = new PDFWriter(setting.getWidth(), setting.getHeight());
         output = outFile;
         entries = inputFile.entries();
-        firstPage = true;
+
+        pageNum = countImageNum();
+        output.createNewFile();
+        outputStream = new FileOutputStream(output);
+        writer = new PDFWriter(setting.getWidth(), setting.getHeight(), outputStream);
+
+        writer.writeHeader();
+        writer.writeCatalogStream();
+        writer.writePagesHeader(pageNum);
+
+
     }
 
-    boolean firstPage = true;
-    void ensureNewPage() {
-        if(firstPage)
-            return;
-        writer.newPage();
+    private int countImageNum() {
+        // temp code.
+        // return 10;
+        int count = 0;
+        Enumeration<? extends ZipEntry> ents = input.entries();
+        while(ents.hasMoreElements()) {
+            ZipEntry ent = ents.nextElement();
+            if(!notImage(ent))
+                count++;
+        }
+        return count;
     }
 
+
+
+    public void done() throws IOException {
+        writer.writeFooter();
+        outputStream.close();
+        outputStream = null;
+    }
+
+
+    int currentPage = 0;
     public void doOne() throws IOException
     {
         ZipEntry ent = entries.nextElement();
-        if(ent.isDirectory() ||
-                (!ent.getName().endsWith(".png") && !ent.getName().endsWith(".jpg")))
+        if(notImage(ent))
             return; // skip.
 
 
@@ -52,19 +78,38 @@ public class ZipConverter {
         Bitmap resizedBmp = Bitmap.createScaledBitmap(bmp, setting.getWidth(), setting.getHeight(), true);
         bmp = null;
 
-        appendImagePage(resizedBmp);
+        if(currentPage != 0)
+            writer.newPageWithoutRender();
+
+        currentPage++;
+        writer.writeImagePage(resizedBmp);
         resizedBmp = null;
 
+        // System.gc();
+
         // temp code.
+        /*
         entries = null;
-        writePDFToFile();
         return;
+        */
+        /*
+        if(currentPage == 10) {
+            entries = null;
+            // writePDFToFile();
+            return;
+        }
+        */
 
         /* correct code
         if(!entries.hasMoreElements()) {
             writePDFToFile();
         }
         */
+    }
+
+    private boolean notImage(ZipEntry ent) {
+        return ent.isDirectory() ||
+                (!ent.getName().endsWith(".png") && !ent.getName().endsWith(".jpg"));
     }
 
     private void writePDFToFile() throws IOException {
@@ -79,11 +124,5 @@ public class ZipConverter {
         return (entries != null) && entries.hasMoreElements();
     }
 
-
-    private void appendImagePage(Bitmap resizedBmp) {
-        ensureNewPage();
-        writer.addImage(0, 0, resizedBmp);
-        firstPage = false;
-    }
 
 }

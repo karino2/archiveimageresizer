@@ -7,6 +7,7 @@
 
 package crl.android.pdfwriter;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class Body extends List {
@@ -15,12 +16,20 @@ public class Body extends List {
 	private int mObjectNumberStart;
 	private int mGeneratedObjectsCount;
 	private ArrayList<IndirectObject> mObjectsList;
+
+    PositionedOutputStream mOutputStream;
 	
 	public Body() {
 		super();
 		clear();
 	}
-	
+
+    public Body(PositionedOutputStream outputStream) {
+        super();
+        mOutputStream = outputStream;
+        clear();
+    }
+
 	public int getObjectNumberStart() {
 		return mObjectNumberStart;
 	}

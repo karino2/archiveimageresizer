@@ -7,6 +7,10 @@
 
 package crl.android.pdfwriter;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+
 public class EnclosedContent extends Base {
 
 	private String mBegin;
@@ -69,5 +73,12 @@ public class EnclosedContent extends Base {
 	public String toPDFString() {
 		return mBegin + mContent.toString() + mEnd;
 	}
+
+    public void writeBegin(PositionedOutputStream os) throws IOException {
+        os.write(mBegin);
+    }
+    public void writeEnd(PositionedOutputStream os) throws IOException {
+        os.write(mEnd);
+    }
 
 }

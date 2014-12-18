@@ -9,6 +9,7 @@ package crl.android.pdfwriter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
@@ -28,6 +29,8 @@ public class XObjectImage {
 	public static String ENCODING = "ISO-8859-1";
 
 	private static int mImageCount = 0;
+    // for unit test.
+    public static void RESET_IMAGE_COUNT() { mImageCount = 0; }
 	
 	private PDFDocument mDocument;
 	private IndirectObject mIndirectObject;
@@ -44,6 +47,7 @@ public class XObjectImage {
 		mId = Indentifiers.generateId(mProcessedImage);
 		mName = "/img" + (++mImageCount);
 	}
+
 	
 	public void appendToDocument() {
 		mIndirectObject = mDocument.newIndirectObject();
@@ -61,6 +65,11 @@ public class XObjectImage {
 		);
 		mIndirectObject.addStreamContent(mProcessedImage);
 	}
+
+    public void writeAndPurge(PositionedOutputStream os) throws IOException {
+        mIndirectObject.writeToStreamAndPurge(os);
+        mProcessedImage = "";
+    }
 	
 	private Bitmap configureBitmap(Bitmap bitmap) {
 		final Bitmap img = bitmap.copy(Config.ARGB_8888, false);

@@ -7,6 +7,8 @@
 
 package crl.android.pdfwriter;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class Pages {
@@ -57,4 +59,24 @@ public class Pages {
 			lPage.render(mIndirectObject.getIndirectReference());
 		}
 	}
+
+    public void writePagesHeader(PositionedOutputStream os, int pageNum) throws IOException {
+        setupDummyKidIDs(pageNum);
+        mIndirectObject.writeDictionaryContent(os,
+                "  /Type /Pages\n" +
+                        "  /MediaBox " + mMediaBox.toPDFString() + "\n" +
+                        "  /Count " + Integer.toString(pageNum) + "\n" +
+                        "  /Kids " + mKids.toPDFString() + "\n"
+        );
+    }
+
+    // very dirty!
+    private void setupDummyKidIDs(int pageNum) {
+        int startID = 3;
+        // page 0 is already added.
+        for(int i = 1; i < pageNum; i++) {
+            int id = startID+i*4; // for every page,  they have font, image, streamcontent. so next page = 3+1
+            mKids.addItem(id+" 0 R");
+        }
+    }
 }

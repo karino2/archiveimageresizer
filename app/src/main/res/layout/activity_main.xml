@@ -11,7 +11,7 @@
         android:id="@+id/editTextFileUrl"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:text="/path/to/zip/file"
+        android:text="/storage/extSdCard/9_MUSIC/guitar/test.zip"
         android:layout_toLeftOf="@+id/buttonBrowse" />
 
     <Button

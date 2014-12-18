@@ -7,6 +7,10 @@
 
 package crl.android.pdfwriter;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+
 public class IndirectObject extends Base {
 
 	private EnclosedContent mContent;
@@ -106,7 +110,21 @@ public class IndirectObject extends Base {
 		return sb.toString();
 	}
 
-	@Override
+    // TODO: stream-ize
+    public void writeToStreamAndPurge(PositionedOutputStream os) throws IOException {
+        writeToStream(os);
+
+        mDictionaryContent.clear();
+        mStreamContent.clear();
+    }
+
+    public void writeToStream(PositionedOutputStream os) throws IOException {
+        mByteOffset = os.getPos();
+        String content = render();
+        os.write(content);
+    }
+
+    @Override
 	public void clear() {
 		mID = new IndirectIdentifier();
 		mByteOffset = 0;
@@ -123,4 +141,26 @@ public class IndirectObject extends Base {
 		return render();
 	}
 
+    public void writeDictionaryStreamContent(PositionedOutputStream outputStream, String streamContent, String dictionaryContent) throws IOException {
+        mByteOffset = outputStream.getPos();
+
+        outputStream.write(mID.toPDFString());
+        outputStream.write(" ");
+        mContent.writeBegin(outputStream);
+        mDictionaryContent.writeBegin(outputStream);
+        outputStream.write(dictionaryContent);
+        mDictionaryContent.writeEnd(outputStream);
+        if(streamContent != null) {
+            mStreamContent.writeBegin(outputStream);
+            outputStream.write(streamContent);
+            mStreamContent.writeEnd(outputStream);
+        }
+
+        mContent.writeEnd(outputStream);
+
+    }
+
+    public void writeDictionaryContent(PositionedOutputStream outputStream, String content) throws IOException {
+        writeDictionaryStreamContent(outputStream, null, content);
+    }
 }

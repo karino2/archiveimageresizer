@@ -9,12 +9,17 @@ package crl.android.pdfwriter;
 
 import android.graphics.Bitmap;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 public class PDFWriter {
 
 	private PDFDocument mDocument;
 	private IndirectObject mCatalog;
 	private Pages mPages;
 	private Page mCurrentPage;
+
+    private PositionedOutputStream mOutputStream = null;
 
 	public PDFWriter() {
 		newDocument(PaperSize.A4_WIDTH, PaperSize.A4_HEIGHT);
@@ -23,9 +28,18 @@ public class PDFWriter {
 	public PDFWriter(int pageWidth, int pageHeight) {
 		newDocument(pageWidth, pageHeight);
 	}
-	
+
+    public PDFWriter(int pageWidth, int pageHeight, OutputStream outputStream) {
+        mOutputStream = new PositionedOutputStream(outputStream);
+        newDocument(pageWidth, pageHeight);
+    }
+
+
 	private void newDocument(int pageWidth, int pageHeight) {
-		mDocument = new PDFDocument();
+        if(mOutputStream != null)
+            mDocument = new PDFDocument(mOutputStream);
+        else
+    		mDocument = new PDFDocument();
 		mCatalog = mDocument.newIndirectObject();
 		mDocument.includeIndirectObject(mCatalog);
 		mPages = new Pages(mDocument, pageWidth, pageHeight);
@@ -37,14 +51,19 @@ public class PDFWriter {
 	private void renderCatalog() {
 		mCatalog.setDictionaryContent("  /Type /Catalog\n  /Pages " + mPages.getIndirectObject().getIndirectReference() + "\n");
 	}
-	
+
+
 	public void newPage() {
-		mCurrentPage = mPages.newPage();
-		mDocument.includeIndirectObject(mCurrentPage.getIndirectObject());
+        newPageWithoutRender();
 		mPages.render();
 	}
-	
-	public void setCurrentPage(int pageNumber) {
+
+    public void newPageWithoutRender() {
+        mCurrentPage = mPages.newPage();
+        mDocument.includeIndirectObject(mCurrentPage.getIndirectObject());
+    }
+
+    public void setCurrentPage(int pageNumber) {
 		mCurrentPage = mPages.getPageAt(pageNumber);
 	}
 	
@@ -93,11 +112,11 @@ public class PDFWriter {
 	}
 
 	public void addImage(int fromLeft, int fromBottom, Bitmap bitmap, String transformation) {
-		final XObjectImage xImage = new XObjectImage(mDocument, bitmap);
-		mCurrentPage.addImage(fromLeft, fromBottom, xImage.getWidth(), xImage.getHeight(), xImage, transformation);
-	}
-	
-	public void addImage(int fromLeft, int fromBottom, int toLeft, int toBottom, Bitmap bitmap) {
+        final XObjectImage xImage = new XObjectImage(mDocument, bitmap);
+        mCurrentPage.addImage(fromLeft, fromBottom, xImage.getWidth(), xImage.getHeight(), xImage, transformation);
+    }
+
+    public void addImage(int fromLeft, int fromBottom, int toLeft, int toBottom, Bitmap bitmap) {
 		addImage(fromLeft, fromBottom, toLeft, toBottom, bitmap, Transformation.DEGREES_0_ROTATION);
 	}
 	
@@ -128,4 +147,38 @@ public class PDFWriter {
 		mPages.render();
 		return mDocument.toPDFString();
 	}
+
+    public void writeHeader() throws IOException {
+        mDocument.writeHeader();
+    }
+
+    public void writeCatalogStream() throws IOException {
+        mCatalog.writeDictionaryContent(mOutputStream, "  /Type /Catalog\n  /Pages " + mPages.getIndirectObject().getIndirectReference() + "\n");
+        mOutputStream.write("\n");
+    }
+
+    public void allocPages(int pageNum) {
+        // page 0 is alreaedy alloced at newDocument.
+        for(int i = 0; i < pageNum-1; i++) {
+            newPageWithoutRender();
+        }
+    }
+
+    public void writePagesHeader(int pageNum) throws IOException {
+        mPages.writePagesHeader(mOutputStream, pageNum);
+        mOutputStream.write("\n");
+    }
+
+    public void writeImagePage(Bitmap bitmap) throws IOException {
+        Page page = mCurrentPage;
+        final XObjectImage xImage = new XObjectImage(mDocument, bitmap);
+
+        page.writeImagePageAndPurgeImage(mOutputStream, mPages.getIndirectObject().getIndirectReference(),
+                0, 0, bitmap.getWidth(), bitmap.getHeight(), xImage, Transformation.DEGREES_0_ROTATION);
+    }
+    public void writeFooter()  throws IOException {
+        mDocument.writeFooter();
+    }
+
+
 }

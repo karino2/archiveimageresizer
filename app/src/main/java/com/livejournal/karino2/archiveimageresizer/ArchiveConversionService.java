@@ -71,6 +71,7 @@ public class ArchiveConversionService extends Service {
 						break;
 						*/
                 }
+                converter.done();
             }catch(IOException ioe)
             {
                 this.publishProgress("IOException! " + ioe.getMessage());

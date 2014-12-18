@@ -7,6 +7,8 @@
 
 package crl.android.pdfwriter;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class Page {
@@ -77,6 +79,14 @@ public class Page {
 		lFont.setDictionaryContent("  /Type /Font\n  /Subtype /" + subType + "\n  /BaseFont /" + baseFont + "\n  /Encoding /" + encoding + "\n");
 		mPageFonts.add(lFont);
 	}
+
+    private void writeContentStream(String content) {
+        /*
+        "  /Type /Page\n  /Parent " + pagesIndirectReference + "\n" +
+                "  /Resources <<\n" + getFontReferences() + getXObjectReferences() + "  >>\n" +
+                "  /Contents " + mPageContents.getIndirectReference() + "\n"
+                */
+    }
 	
 	private void addContent(String content) {
 		mPageContents.addStreamContent(content);
@@ -84,6 +94,10 @@ public class Page {
 		mPageContents.setDictionaryContent("  /Length " + Integer.toString(streamContent.length()) + "\n");
 		mPageContents.setStreamContent(streamContent);
 	}
+
+    private void writeContent(PositionedOutputStream os, String streamContent) throws IOException {
+        mPageContents.writeDictionaryStreamContent(os, streamContent,  "  /Length " + Integer.toString(streamContent.length()) + "\n");
+    }
 	
 	public void addRawContent(String rawContent) {
 		addContent(rawContent);
@@ -141,7 +155,44 @@ public class Page {
 		xObject.appendToDocument();
 		return xObject.getName();
 	}
-	
+
+    public void writeImagePageAndPurgeImage(PositionedOutputStream os, String parentId, int fromLeft, int fromBottom, int width, int height, XObjectImage xImage, String transformation) throws IOException {
+        final String name = ensureXObjectImage(xImage);
+        final String translate = "1 0 0 1 " + fromLeft + " " + fromBottom;
+        final String scale = "" + width + " 0 0 " + height + " 0 0";
+        final String rotate = transformation + " 0 0";
+
+
+        mIndirectObject.writeDictionaryContent(os,
+                "  /Type /Page\n  /Parent " + parentId + "\n" +
+                        "  /Resources <<\n" + getFontReferences() + getXObjectReferences() + "  >>\n" +
+                        "  /Contents " + mPageContents.getIndirectReference() + "\n"
+        );
+        os.write("\n");
+
+        for(IndirectObject obj : mPageFonts) {
+            obj.writeToStream(os);
+            os.write("\n");
+        }
+
+        writeContent(os,
+                "q\n" +
+                        translate + " cm\n" +
+                        rotate + " cm\n" +
+                        scale + " cm\n" +
+                        name + " Do\n" +
+                        "Q\n"
+        );
+        os.write("\n");
+
+
+
+        xImage.writeAndPurge(os);
+        os.write("\n");
+
+
+    }
+
 	public void addImage(int fromLeft, int fromBottom, int width, int height, XObjectImage xImage, String transformation){
 		final String name = ensureXObjectImage(xImage);
 		final String translate = "1 0 0 1 " + fromLeft + " " + fromBottom;
