@@ -79,7 +79,7 @@ public class ZipConverter {
         bmp = null;
 
         if(currentPage != 0)
-            writer.newPageWithoutRender();
+            writer.newOrphanPage();
 
         currentPage++;
         writer.writeImagePage(resizedBmp);

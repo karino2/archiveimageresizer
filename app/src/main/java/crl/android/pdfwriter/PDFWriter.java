@@ -58,7 +58,12 @@ public class PDFWriter {
 		mPages.render();
 	}
 
-    public void newPageWithoutRender() {
+    public void newOrphanPage() {
+        mCurrentPage = new Page(mDocument);
+        mDocument.includeIndirectObject(mCurrentPage.getIndirectObject());
+    }
+
+    private void newPageWithoutRender() {
         mCurrentPage = mPages.newPage();
         mDocument.includeIndirectObject(mCurrentPage.getIndirectObject());
     }
@@ -157,23 +162,22 @@ public class PDFWriter {
         mOutputStream.write("\n");
     }
 
-    public void allocPages(int pageNum) {
-        // page 0 is alreaedy alloced at newDocument.
-        for(int i = 0; i < pageNum-1; i++) {
-            newPageWithoutRender();
-        }
-    }
+
+    String mPagesRef;
 
     public void writePagesHeader(int pageNum) throws IOException {
         mPages.writePagesHeader(mOutputStream, pageNum);
         mOutputStream.write("\n");
+        mPagesRef = mPages.getIndirectObject().getIndirectReference();
+
+        mPages = null;
     }
 
     public void writeImagePage(Bitmap bitmap) throws IOException {
         Page page = mCurrentPage;
         final XObjectImage xImage = new XObjectImage(mDocument, bitmap);
 
-        page.writeImagePageAndPurgeImage(mOutputStream, mPages.getIndirectObject().getIndirectReference(),
+        page.writeImagePageAndPurgeImage(mOutputStream, mPagesRef,
                 0, 0, bitmap.getWidth(), bitmap.getHeight(), xImage, Transformation.DEGREES_0_ROTATION);
     }
     public void writeFooter()  throws IOException {

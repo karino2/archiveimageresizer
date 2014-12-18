@@ -58,7 +58,7 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         writer.writePagesHeader(2);
 
         writer.writeImagePage(starImg);
-        writer.newPageWithoutRender();
+        writer.newOrphanPage();
         writer.writeImagePage(bmpImg);
 
         writer.writeFooter();
