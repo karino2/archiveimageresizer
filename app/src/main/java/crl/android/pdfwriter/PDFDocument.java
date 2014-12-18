@@ -101,11 +101,12 @@ public class PDFDocument extends Base {
                 mCRT.addObjectXRefInfo(iobj.getByteOffset(), iobj.getGeneration(), iobj.getInUse());
             }
         }
+        int xrefPos = mOutputStream.getPos();
         mOutputStream.write(mCRT.toPDFString());
 
 
         mTrailer.setObjectsCount(mBody.getObjectsCount());
-        mTrailer.setCrossReferenceTableByteOffset(mOutputStream.getPos());
+        mTrailer.setCrossReferenceTableByteOffset(xrefPos);
         mTrailer.setId(Indentifiers.generateId());
         mOutputStream.write(mTrailer.toPDFString());
     }

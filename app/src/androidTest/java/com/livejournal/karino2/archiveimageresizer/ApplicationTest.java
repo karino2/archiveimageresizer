@@ -83,7 +83,12 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
     private void verifyLiteralResult(String actual) {
         String expectUntilID = getExpectUntilID();
-        assertEquals(expectUntilID, actual.substring(0, expectUntilID.length()));
+
+        // "%PDF-1.4\n"
+        String beforeBinary = "%PDF-1.4\n%";
+        assertEquals(beforeBinary, actual.substring(0, beforeBinary.length()));
+        int afterBinaryPos = "%PDF-1.4\n%����\n".length();
+        assertEquals(expectUntilID.substring(afterBinaryPos), actual.substring(afterBinaryPos, expectUntilID.length()));
 
         String tmp = actual.substring(expectUntilID.length());
 
