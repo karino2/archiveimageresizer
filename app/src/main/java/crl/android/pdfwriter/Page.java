@@ -80,14 +80,6 @@ public class Page {
 		mPageFonts.add(lFont);
 	}
 
-    private void writeContentStream(String content) {
-        /*
-        "  /Type /Page\n  /Parent " + pagesIndirectReference + "\n" +
-                "  /Resources <<\n" + getFontReferences() + getXObjectReferences() + "  >>\n" +
-                "  /Contents " + mPageContents.getIndirectReference() + "\n"
-                */
-    }
-	
 	private void addContent(String content) {
 		mPageContents.addStreamContent(content);
 		String streamContent = mPageContents.getStreamContent();

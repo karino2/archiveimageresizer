@@ -44,8 +44,6 @@ public class ZipConverter {
     }
 
     private int countImageNum() {
-        // temp code.
-        // return 10;
         int count = 0;
         Enumeration<? extends ZipEntry> ents = input.entries();
         while(ents.hasMoreElements()) {
@@ -69,8 +67,11 @@ public class ZipConverter {
     public void doOne() throws IOException
     {
         ZipEntry ent = entries.nextElement();
-        if(notImage(ent))
-            return; // skip.
+        while(notImage(ent)) {
+            ent = entries.nextElement();
+            if(ent == null)
+                return;
+        }
 
 
         InputStream is = input.getInputStream(ent);
@@ -85,38 +86,11 @@ public class ZipConverter {
         writer.writeImagePage(resizedBmp, true);
         resizedBmp = null;
 
-        // System.gc();
-
-        // temp code.
-        /*
-        entries = null;
-        return;
-        */
-        /*
-        if(currentPage == 10) {
-            entries = null;
-            // writePDFToFile();
-            return;
-        }
-        */
-
-        /* correct code
-        if(!entries.hasMoreElements()) {
-            writePDFToFile();
-        }
-        */
     }
 
     private boolean notImage(ZipEntry ent) {
         return ent.isDirectory() ||
                 (!ent.getName().endsWith(".png") && !ent.getName().endsWith(".jpg"));
-    }
-
-    private void writePDFToFile() throws IOException {
-        output.createNewFile();
-        FileOutputStream stream = new FileOutputStream(output);
-        stream.write(writer.asString().getBytes("ISO-8859-1"));
-        stream.close();
     }
 
     public boolean isRunning()

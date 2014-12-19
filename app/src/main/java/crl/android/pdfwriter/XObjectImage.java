@@ -55,7 +55,7 @@ public class XObjectImage {
             // even if there is only one binary image, we use best compression for ALL images.
             // this is for backward compatibility of unit test.
             COMPRESSION_LEVEL = Deflater.BEST_COMPRESSION;
-            
+
             mProcessedBinaryImage = processBinaryImage(configureBitmap(bitmap));
             mId = Indentifiers.generateId(mProcessedBinaryImage);
 
