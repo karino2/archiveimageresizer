@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.regex.Pattern;
 
 import crl.android.pdfwriter.PDFWriter;
-import crl.android.pdfwriter.PositionedOutputStream;
 import crl.android.pdfwriter.XObjectImage;
 
 /**
@@ -467,17 +466,17 @@ buf.append(                "endobj\n" );
 buf.append(                "\n" );
 buf.append(                "xref\r\n" );
 buf.append(                "0 11\r\n" );
-buf.append(                "0000000000 65536 f \r\n" );
-buf.append(                "0000000015 00000 n \r\n" );
-buf.append(                "0000000069 00000 n \r\n" );
-buf.append(                "0000000169 00000 n \r\n" );
-buf.append(                "0000000337 00000 n \r\n" );
-buf.append(                "0000000445 00000 n \r\n" );
-buf.append(                "0000000558 00000 n \r\n" );
-buf.append(                "0000037755 00000 n \r\n" );
-buf.append(                "0000037924 00000 n \r\n" );
-buf.append(                "0000038032 00000 n \r\n" );
-buf.append(                "0000038145 00000 n \r\n" );
+buf.append(                "0000000000 65536 f\r\n" );
+buf.append(                "0000000015 00000 n\r\n" );
+buf.append(                "0000000069 00000 n\r\n" );
+buf.append(                "0000000169 00000 n\r\n" );
+buf.append(                "0000000337 00000 n\r\n" );
+buf.append(                "0000000445 00000 n\r\n" );
+buf.append(                "0000000558 00000 n\r\n" );
+buf.append(                "0000037755 00000 n\r\n" );
+buf.append(                "0000037924 00000 n\r\n" );
+buf.append(                "0000038032 00000 n\r\n" );
+buf.append(                "0000038145 00000 n\r\n" );
 buf.append(                "trailer\n" );
 buf.append(                "<<\n" );
 buf.append(                "  /Size 10\n" );
