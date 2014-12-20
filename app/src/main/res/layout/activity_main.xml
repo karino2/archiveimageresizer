@@ -31,4 +31,46 @@
         android:id="@+id/buttonConvert"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/width_label"
+        android:id="@+id/textView"
+        android:layout_marginTop="31dp"
+        android:layout_below="@+id/editTextFileUrl"
+        android:layout_toLeftOf="@+id/buttonConvert"
+        android:layout_toStartOf="@+id/buttonConvert" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/editTextWidth"
+        android:layout_alignBottom="@+id/textView"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:text="560" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_height"
+        android:id="@+id/textView2"
+        android:layout_marginTop="33dp"
+        android:layout_below="@+id/textView"
+        android:layout_toLeftOf="@+id/editTextWidth"
+        android:layout_toStartOf="@+id/editTextWidth" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/editTextHeight"
+        android:layout_alignBottom="@+id/textView2"
+        android:layout_alignRight="@+id/editTextWidth"
+        android:layout_alignEnd="@+id/editTextWidth"
+        android:text="734" />
 </RelativeLayout>

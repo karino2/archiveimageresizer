@@ -3,6 +3,7 @@ package com.livejournal.karino2.archiveimageresizer;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.IBinder;
 import android.support.v7.app.ActionBarActivity;
@@ -52,9 +53,20 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void startConversion() {
+        SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
+        prefs.edit()
+                .putInt("WIDTH", getIntValue(R.id.editTextWidth))
+                .putInt("HEIGHT", getIntValue(R.id.editTextHeight))
+                .commit();
+
         Intent intent = new Intent(this, ArchiveConversionService.class);
         intent.setData(Uri.fromFile(new File(findEditText(R.id.editTextFileUrl).getText().toString())));
         startService(intent);
+    }
+
+    private int getIntValue(int id) {
+        EditText et = findEditText(id);
+        return Integer.parseInt(et.getText().toString());
     }
 
 

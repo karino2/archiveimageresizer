@@ -2,6 +2,7 @@ package com.livejournal.karino2.archiveimageresizer;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
@@ -44,6 +45,15 @@ public class ArchiveConversionService extends Service {
         return START_STICKY;
     }
 
+    ConversionSetting createConversionSetting()
+    {
+        SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
+        int width = prefs.getInt("WIDTH", 560);
+        int height = prefs.getInt("HEIGHT", 734);
+
+        return new ConversionSetting(width, height);
+    }
+
     class ZipConversionTask extends AsyncTask<String, String, String> {
 
         @Override
@@ -58,7 +68,7 @@ public class ArchiveConversionService extends Service {
 
                 String fileName = zipFile.getName();
                 File outputFile = new File(zipFile.getParentFile().getAbsolutePath(), fileName.substring(0, fileName.lastIndexOf("."))+"_small.pdf");
-                converter.startConversion(new ConversionSetting(), new ZipFile(zipPath), outputFile);
+                converter.startConversion(createConversionSetting(), new ZipFile(zipPath), outputFile);
                 publishProgress("setup done");
 
                 int processedNum = 0;

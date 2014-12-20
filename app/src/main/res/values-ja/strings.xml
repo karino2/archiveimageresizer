@@ -3,4 +3,6 @@
     <string name="app_name">Zip画像縮小！</string>
     <string name="action_settings">Settings</string>
     <string name="label_convert">変換</string>
+    <string name="label_width">幅</string>
+    <string name="label_height">高さ</string>
 </resources>

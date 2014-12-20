@@ -4,5 +4,7 @@
     <string name="app_name">ArchiveImageResizer</string>
     <string name="action_settings">Settings</string>
     <string name="label_convert">Convert</string>
+    <string name="width_label">Width</string>
+    <string name="label_height">Height</string>
 
 </resources>
