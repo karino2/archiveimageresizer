@@ -34,6 +34,8 @@ public class ArchiveConversionService extends Service {
         if(intent == null)
         {
             showMessage("service recreate: ");
+            stopSelf();
+            return START_NOT_STICKY;
         } else {
             showMessage("start service:" + intent.getDataString());
             state = State.CONVERTING;
@@ -64,12 +66,6 @@ public class ArchiveConversionService extends Service {
                 {
                     converter.doOne();
                     publishProgress("parse [" + processedNum++ + "] image. ");
-
-                    // for test code
-					/*
-					if(processedNum >= 100)
-						break;
-						*/
                 }
                 converter.done();
             }catch(IOException ioe)
@@ -90,6 +86,7 @@ public class ArchiveConversionService extends Service {
         protected void onPostExecute(String arg)
         {
             showMessage("done");
+            stopSelf();
         }
     }
 
