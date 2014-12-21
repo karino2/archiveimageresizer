@@ -73,6 +73,12 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void startConversion() {
+        String path = findEditText(R.id.editTextFileUrl).getText().toString();
+        if(!fileExist(path))
+        {
+            showMessage("File not exists: " + path);
+            return;
+        }
         SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
         prefs.edit()
                 .putInt("WIDTH", getIntValue(R.id.editTextWidth))
@@ -80,8 +86,13 @@ public class MainActivity extends ActionBarActivity {
                 .commit();
 
         Intent intent = new Intent(this, ArchiveConversionService.class);
-        intent.setData(Uri.fromFile(new File(findEditText(R.id.editTextFileUrl).getText().toString())));
+        intent.setData(Uri.fromFile(new File(path)));
         startService(intent);
+    }
+
+    private boolean fileExist(String path) {
+        File f = new File(path);
+        return f.exists();
     }
 
     private int getIntValue(int id) {
