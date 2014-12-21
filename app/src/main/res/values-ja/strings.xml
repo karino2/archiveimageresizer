@@ -5,4 +5,6 @@
     <string name="label_convert">変換</string>
     <string name="label_width">幅</string>
     <string name="label_height">高さ</string>
+    <string name="label_cancel_conversion">変換を中止</string>
+    <string name="label_converting">変換中:</string>
 </resources>

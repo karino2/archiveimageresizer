@@ -28,13 +28,11 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         Intent intent = getIntent();
-        if(intent != null && intent.getAction().equals(Intent.ACTION_VIEW))
+        if(intent != null && intent.getAction() != null &&intent.getAction().equals(Intent.ACTION_VIEW))
         {
             Uri uri = intent.getData();
             showMessage(uri.getPath());
             setTextToEditText(R.id.editTextFileUrl, uri.getPath());
-        } else {
-            showMessage("default launch, no sent file");
         }
 
         setOnClickListenerToButton(R.id.buttonBrowse, new View.OnClickListener() {
@@ -44,7 +42,7 @@ public class MainActivity extends ActionBarActivity {
                 intent.setAction(Intent.ACTION_GET_CONTENT);
                 intent.setType("application/zip");
                 startActivityForResult(intent, REQUEST_PICK_ZIP);
-                showMessage("browse...");
+                showMessage("Pick zip file to convert.");
             }
         });
 

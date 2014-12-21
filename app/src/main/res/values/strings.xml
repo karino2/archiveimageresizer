@@ -6,5 +6,8 @@
     <string name="label_convert">Convert</string>
     <string name="width_label">Width</string>
     <string name="label_height">Height</string>
-
+    <string name="title_activity_service_manage">ServiceManageActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="label_cancel_conversion">Cancel conversion</string>
+    <string name="label_converting">Converting:</string>
 </resources>

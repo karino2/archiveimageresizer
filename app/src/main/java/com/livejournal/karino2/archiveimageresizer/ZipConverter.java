@@ -43,6 +43,10 @@ public class ZipConverter {
 
     }
 
+    public int getPageNum() {
+        return pageNum;
+    }
+
     private int countImageNum() {
         int count = 0;
         Enumeration<? extends ZipEntry> ents = input.entries();
