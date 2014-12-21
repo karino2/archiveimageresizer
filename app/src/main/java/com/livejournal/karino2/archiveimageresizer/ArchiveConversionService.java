@@ -60,6 +60,7 @@ public class ArchiveConversionService extends Service {
 
             state = State.CONVERTING;
             startConvertingZip(intent.getData().getPath());
+            showMessage("Start conversion...");
         }
         return START_STICKY;
     }
@@ -183,7 +184,7 @@ public class ArchiveConversionService extends Service {
 
     private PendingIntent createPendingIntent(Class<?> cls) {
         Intent intent = new Intent(this, cls);
-        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         return PendingIntent.getActivity(this,
                 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }

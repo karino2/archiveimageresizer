@@ -22,10 +22,11 @@ public class ServiceManageActivity extends ActionBarActivity {
         ((Button)findViewById(R.id.buttonCancelConversion)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                showMessage("Canceling...");
                 Intent intent = new Intent(ServiceManageActivity.this, ArchiveConversionService.class);
                 intent.putExtra("REQUEST_CANCEL", true);
                 startService(intent);
+                finish();
             }
         });
     }
