@@ -20,6 +20,8 @@ import java.io.File;
 
 public class MainActivity extends ActionBarActivity {
 
+    static final int REQUEST_PICK_ZIP = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +40,10 @@ public class MainActivity extends ActionBarActivity {
         setOnClickListenerToButton(R.id.buttonBrowse, new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Intent intent = new Intent();
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                intent.setType("application/zip");
+                startActivityForResult(intent, REQUEST_PICK_ZIP);
                 showMessage("browse...");
             }
         });
@@ -50,6 +56,20 @@ public class MainActivity extends ActionBarActivity {
         });
 
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_PICK_ZIP:
+                if(resultCode == RESULT_OK) {
+                    String path = data.getData().getPath();
+                    setTextToEditText(R.id.editTextFileUrl, path);
+                }
+                return;
+
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void startConversion() {
