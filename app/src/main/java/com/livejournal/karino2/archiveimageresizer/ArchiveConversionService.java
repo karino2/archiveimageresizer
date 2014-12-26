@@ -58,6 +58,16 @@ public class ArchiveConversionService extends Service {
                 return START_NOT_STICKY;
             }
 
+            SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
+            prefs.edit()
+                    .putInt("WIDTH", intent.getIntExtra("WIDTH", 560))
+                    .putInt("HEIGHT", intent.getIntExtra("HEIGHT", 734))
+                    .putBoolean("ENABLE_BLANK_REMOVE", intent.getBooleanExtra("ENABLE_BLANK_REMOVE", true))
+                    .putBoolean("ENABLE_NOMBRE_REMOVE", intent.getBooleanExtra("ENABLE_NOMBRE_REMOVE", true))
+                    .putBoolean("ENABLE_FOUR_BIT_COLOR", intent.getBooleanExtra("ENABLE_FOUR_BIT_COLOR", true))
+                    .commit();
+
+
             state = State.CONVERTING;
             startConvertingZip(intent.getData().getPath());
             showMessage("Start conversion...");
@@ -70,8 +80,11 @@ public class ArchiveConversionService extends Service {
         SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
         int width = prefs.getInt("WIDTH", 560);
         int height = prefs.getInt("HEIGHT", 734);
+        boolean enableBlankRmv = prefs.getBoolean("ENABLE_BLANK_REMOVE", true);
+        boolean enableNombreRmv = prefs.getBoolean("ENABLE_NOMBRE_REMOVE", true);
+        boolean enableFourBitColor = prefs.getBoolean("ENABLE_FOUR_BIT_COLOR", true);
 
-        return new ConversionSetting(width, height);
+        return new ConversionSetting(width, height, enableBlankRmv, enableNombreRmv, enableFourBitColor);
     }
 
     class ZipConversionTask extends AsyncTask<String, Integer, String> {

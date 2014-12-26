@@ -7,4 +7,7 @@
     <string name="label_height">高さ</string>
     <string name="label_cancel_conversion">変換を中止</string>
     <string name="label_converting">変換中:</string>
+    <string name="label_blank_remove">Enable blank removal</string>
+    <string name="label_nombre_remove">Enable nombre removal</string>
+    <string name="label_four_bit_color">Reduce color to 4bit gray scale with gamma collection</string>
 </resources>

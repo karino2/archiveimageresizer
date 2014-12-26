@@ -7,10 +7,16 @@ public class ConversionSetting {
     // 560x735. for landscape, 722x535
     int width;
     int height;
-    public ConversionSetting(int w, int h)
+    boolean enableRemoveBlank;
+    boolean enableRemoveNombre;
+    boolean enableFourBitColor;
+    public ConversionSetting(int w, int h, boolean isRemoveBlank, boolean isRemoveNombre, boolean isFourBitColor)
     {
         width= w;
         height = h;
+        enableRemoveBlank = isRemoveBlank;
+        enableRemoveNombre = isRemoveNombre;
+        enableFourBitColor = isFourBitColor;
     }
     public int getWidth() {
         return width;
@@ -18,4 +24,7 @@ public class ConversionSetting {
     public int getHeight() {
         return height;
     }
+    public boolean isEnableRemoveBlank() { return enableRemoveBlank; }
+    public boolean isEnableRemoveNombre() { return enableRemoveNombre; }
+    public boolean isEnableFourBitColor() { return enableFourBitColor; }
 }

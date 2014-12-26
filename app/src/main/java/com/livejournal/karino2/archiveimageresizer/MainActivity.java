@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -77,15 +78,31 @@ public class MainActivity extends ActionBarActivity {
             showMessage("File not exists: " + path);
             return;
         }
+        /*
         SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
+
         prefs.edit()
                 .putInt("WIDTH", getIntValue(R.id.editTextWidth))
                 .putInt("HEIGHT", getIntValue(R.id.editTextHeight))
+                .putBoolean("ENABLE_BLANK_REMOVE", getBooleanValue(R.id.checkBoxEnableBlankRemove))
+                .putBoolean("ENABLE_NOMBRE_REMOVE", getBooleanValue(R.id.checkBoxEnableNombreRemove))
+                .putBoolean("ENABLE_FOUR_BIT_COLOR", getBooleanValue(R.id.checkBoxFourBitColor))
                 .commit();
+                */
 
         Intent intent = new Intent(this, ArchiveConversionService.class);
         intent.setData(Uri.fromFile(new File(path)));
+        intent.putExtra("WIDTH", getIntValue(R.id.editTextWidth));
+        intent.putExtra("HEIGHT", getIntValue(R.id.editTextHeight));
+        intent.putExtra("ENABLE_BLANK_REMOVE", getBooleanValue(R.id.checkBoxEnableBlankRemove));
+        intent.putExtra("ENABLE_NOMBRE_REMOVE", getBooleanValue(R.id.checkBoxEnableNombreRemove));
+        intent.putExtra("ENABLE_FOUR_BIT_COLOR", getBooleanValue(R.id.checkBoxFourBitColor));
         startService(intent);
+    }
+
+    private boolean getBooleanValue(int cbxId) {
+        CheckBox cb = (CheckBox)findViewById(cbxId);
+        return cb.isChecked();
     }
 
     private boolean fileExist(String path) {

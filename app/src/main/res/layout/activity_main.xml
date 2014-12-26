@@ -73,4 +73,34 @@
         android:layout_alignRight="@+id/editTextWidth"
         android:layout_alignEnd="@+id/editTextWidth"
         android:text="734" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_blank_remove"
+        android:id="@+id/checkBoxEnableBlankRemove"
+        android:layout_below="@+id/editTextHeight"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:checked="true" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_nombre_remove"
+        android:id="@+id/checkBoxEnableNombreRemove"
+        android:layout_below="@+id/checkBoxEnableBlankRemove"
+        android:layout_alignLeft="@+id/checkBoxEnableBlankRemove"
+        android:layout_alignStart="@+id/checkBoxEnableBlankRemove"
+        android:checked="true" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_four_bit_color"
+        android:id="@+id/checkBoxFourBitColor"
+        android:layout_below="@+id/checkBoxEnableNombreRemove"
+        android:layout_alignLeft="@+id/checkBoxEnableNombreRemove"
+        android:layout_alignStart="@+id/checkBoxEnableNombreRemove"
+        android:checked="true" />
 </RelativeLayout>

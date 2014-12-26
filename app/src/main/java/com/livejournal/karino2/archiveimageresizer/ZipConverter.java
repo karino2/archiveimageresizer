@@ -2,6 +2,7 @@ package com.livejournal.karino2.archiveimageresizer;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -80,16 +81,43 @@ public class ZipConverter {
 
         InputStream is = input.getInputStream(ent);
         Bitmap bmp = BitmapFactory.decodeStream(is);
-        Bitmap resizedBmp = Bitmap.createScaledBitmap(bmp, setting.getWidth(), setting.getHeight(), true);
-        bmp = null;
+        Bitmap resizedBmp = convertPage(bmp);
 
         if(currentPage != 0)
             writer.newOrphanPage();
 
         currentPage++;
         writer.writeImagePage(resizedBmp, true);
-        resizedBmp = null;
+    }
 
+    private Bitmap convertPage(Bitmap bmp) {
+        if(setting.isEnableRemoveBlank()) {
+            NovelAnalyzer analyzer = new NovelAnalyzer();
+            bmp = analyzer.prescale(bmp);
+            analyzer.setTargetAndSetup(bmp);
+            analyzer.setEnableRemoveNombre(setting.isEnableRemoveNombre());
+            Rect rect = analyzer.findWholeRegionWithoutBlank(bmp);
+            if(rect != null)
+            {
+                bmp = Bitmap.createBitmap(bmp, rect.left, rect.top, rect.width(), rect.height());
+            }
+        }
+
+        // TODO: handle four bit grayscale.
+
+        return scaleTo(bmp, setting.getWidth(), setting.getHeight());
+    }
+
+    private Bitmap scaleTo(Bitmap bmp, int width, int height) {
+        if(width > bmp.getWidth() && height > bmp.getHeight())
+            return bmp;
+        double scaleX = width/((double)bmp.getWidth());
+        double scaleY = height/((double)bmp.getHeight());
+        if(scaleX > scaleY) {
+            return Bitmap.createScaledBitmap(bmp, (int)(bmp.getWidth()*scaleY), height, true);
+
+        }
+        return Bitmap.createScaledBitmap(bmp, width, (int)(bmp.getHeight()*scaleX), true);
     }
 
     private boolean notImage(ZipEntry ent) {

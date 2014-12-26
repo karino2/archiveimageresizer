@@ -10,4 +10,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="label_cancel_conversion">Cancel conversion</string>
     <string name="label_converting">Converting:</string>
+    <string name="label_blank_remove">Enable blank removal</string>
+    <string name="label_nombre_remove">Enable nombre removal</string>
+    <string name="label_four_bit_color">Reduce color to 4bit gray scale with gamma collection</string>
 </resources>
