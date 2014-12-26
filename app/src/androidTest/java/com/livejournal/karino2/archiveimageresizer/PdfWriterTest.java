@@ -17,8 +17,8 @@ import crl.android.pdfwriter.XObjectImage;
 /**
  * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>
  */
-public class ApplicationTest extends ApplicationTestCase<Application> {
-    public ApplicationTest() {
+public class PdfWriterTest extends ApplicationTestCase<Application> {
+    public PdfWriterTest() {
         super(Application.class);
     }
 
