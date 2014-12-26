@@ -230,6 +230,8 @@ public class NovelAnalyzer {
     private Rect findNombreFromYInterval(Interval yInterval)
     {
         Rect res = new Rect(0, 0, 0, 0);
+        if(!enableRemoveNombre)
+            return res;
         Rect checkRegion = new Rect(BLANK_IGNORE_LEFT, yInterval.Low+yIntervalOffset, checkRegionRight(), yInterval.High+yIntervalOffset);
         int[] projectedX = analyzer.projectToX(checkRegion, GROUP_REGION_VERTICAL_LIMIT);
         int xOffset = checkRegion.left;
