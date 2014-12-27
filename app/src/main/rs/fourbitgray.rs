@@ -13,9 +13,9 @@ uchar4 __attribute__((kernel)) fourBitGrayWithGamma(uchar4 in)
     // for 4bit color, 0-16 =>0 17-33=>17, ...
     int bitLevel = (int)(grayVal/17.0f);
     uchar4 outVal;
-    outVal.r = 17*bitLevel;
-    outVal.g = 17*bitLevel;
-    outVal.b = 17*bitLevel;
+    outVal.r = clamp(17*bitLevel, 0, 255);
+    outVal.g = clamp(17*bitLevel, 0, 255);
+    outVal.b = clamp(17*bitLevel, 0, 255);
     outVal.a = 255;
     return outVal;
 }
