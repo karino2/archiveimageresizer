@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.IBinder;
@@ -325,10 +326,29 @@ public class ArchiveConversionService extends Service {
             if(exceptionMessage != null)
                 showNotificationMessage(exceptionMessage);
             else
-                showNotificationMessage("Conversion done.");
+                showFinishNotification(createResultPDFFileFromZipPath(getSetting().getZipPath()));
             gotoState(State.DORMANT);
             stopSelf();
         }
+    }
+
+    void showFinishNotification(File resultFile)
+    {
+        notification = null;
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(Uri.fromFile(resultFile), "application/pdf");
+        PendingIntent pintent = PendingIntent.getActivity(this,
+                0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification notif = new NotificationCompat.Builder(this)
+                .setContentIntent(pintent)
+                .setAutoCancel(true)
+                .setContentTitle(getText(R.string.app_name))
+                .setTicker("Finish conversion")
+                .setContentText("Finish conversion.")
+                .setSmallIcon(R.drawable.ic_launcher)
+                .build();
+        notificationManager.notify(STATUS_NOTIFICATION_ID, notif);
     }
 
     void showNotificationMessage(String msg)
