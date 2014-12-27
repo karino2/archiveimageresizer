@@ -111,6 +111,11 @@ public class ArchiveConversionService extends Service {
                 return START_NOT_STICKY;
             }
 
+            if(isConverting()) {
+                showMessage("TODO: support queueing, ignore second request now.");
+                return START_NOT_STICKY;
+            }
+
             String zipPath = intent.getData().getPath();
             SharedPreferences prefs = getPref();
             prefs.edit()
