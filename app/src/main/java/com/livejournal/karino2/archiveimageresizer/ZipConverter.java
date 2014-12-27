@@ -2,22 +2,20 @@ package com.livejournal.karino2.archiveimageresizer;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.RenderScript;
 
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import crl.android.pdfwriter.PDFWriter;
-import crl.android.pdfwriter.XObjectImage;
 
 /**
  * Created by karino on 12/17/14.
@@ -35,6 +33,9 @@ public class ZipConverter {
     public ZipConverter(RenderScript rs, ScriptC_fourbitgray script) {
         renderScript = rs;
         grayScript = script;
+        paintForScale = new Paint();
+        paintForScale.setFilterBitmap(true);
+        paintForScale.setDither(true);
     }
 
 
@@ -106,7 +107,7 @@ public class ZipConverter {
             bmp = toGrayScaleFourBitGamma(bmp);
         }
 
-        return scaleTo(bmp, setting.getWidth(), setting.getHeight());
+        return scaleToCanvas(bmp);
     }
 
     private Bitmap toGrayScaleFourBitGamma(Bitmap bmp) {
@@ -119,16 +120,56 @@ public class ZipConverter {
         return res;
     }
 
-    private Bitmap scaleTo(Bitmap bmp, int width, int height) {
-        if(width > bmp.getWidth() && height > bmp.getHeight())
+    Bitmap canvasBitmap;
+    Bitmap getCanvasBitmap()
+    {
+        if(canvasBitmap == null)
+            canvasBitmap = Bitmap.createBitmap(setting.getWidth(), setting.getHeight(), Bitmap.Config.ARGB_8888);
+        return canvasBitmap;
+    }
+
+    Paint paintForScale;
+    Paint paintForNonScale = new Paint();
+    // result bitmap is reused.
+    private Bitmap scaleToCanvas(Bitmap bmp) {
+        int width = setting.getWidth();
+        int height = setting.getHeight();
+
+        if(bmp.getWidth() == width &&
+                bmp.getHeight() == height)
             return bmp;
+
+        Bitmap res = getCanvasBitmap();
+        res.eraseColor(Color.WHITE);
+        Canvas canvas = new Canvas(res);
+
+
+        if(width > bmp.getWidth() && height > bmp.getHeight()) {
+            if(width == bmp.getWidth()) {
+                canvas.drawBitmap(bmp, 0, 0, paintForNonScale);
+            } else {
+                canvas.drawBitmap(bmp, (width-bmp.getWidth())/2, 0, paintForNonScale);
+            }
+            return res;
+        }
+
+        Matrix mat = new Matrix();
         double scaleX = width/((double)bmp.getWidth());
         double scaleY = height/((double)bmp.getHeight());
         if(scaleX > scaleY) {
-            return Bitmap.createScaledBitmap(bmp, (int)(bmp.getWidth()*scaleY), height, true);
+            mat.setScale((float)scaleY, (float)scaleY);
+            float cx = (float)((width - bmp.getWidth()*scaleY)/2.0);
+            mat.postTranslate(cx, 0);
+            canvas.drawBitmap(bmp, mat, paintForScale);
+            return res;
+
+            // return Bitmap.createScaledBitmap(bmp, (int)(bmp.getWidth()*scaleY), height, true);
 
         }
-        return Bitmap.createScaledBitmap(bmp, width, (int)(bmp.getHeight()*scaleX), true);
+        mat.setScale((float)scaleX, (float)scaleX);
+        canvas.drawBitmap(bmp, mat, paintForScale);
+        return res;
+        // return Bitmap.createScaledBitmap(bmp, width, (int)(bmp.getHeight()*scaleX), true);
     }
 
     private boolean notImage(ZipEntry ent) {
