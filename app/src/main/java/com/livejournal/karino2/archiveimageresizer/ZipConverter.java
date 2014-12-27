@@ -132,5 +132,6 @@ public class ZipConverter {
         for(int i = 0; i < skipUntil; i++) {
             getNext();
         }
+        currentPage = skipUntil;
     }
 }
