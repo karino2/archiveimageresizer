@@ -52,11 +52,16 @@ public class NovelAnalyzer {
         if(yIntervals.size() < 0)
             return null;
 
-        Rect nombreRect = findNombre();
-        Rect validRect = findRegionWithoutBlank(nombreRect);
-        validRect = extendValidRegionIfEdge(validRect);
-        validRect = expandRect(validRect, FINAL_SWELL_SIZE);
-        return validRect;
+        try {
+            Rect nombreRect = findNombre();
+            Rect validRect = findRegionWithoutBlank(nombreRect);
+            validRect = extendValidRegionIfEdge(validRect);
+            validRect = expandRect(validRect, FINAL_SWELL_SIZE);
+            return validRect;
+        }catch(NullPointerException ne) // currently, no dark enough yinterval case occure.
+        {
+            return null;
+        }
 
     }
 
