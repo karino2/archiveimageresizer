@@ -3,6 +3,8 @@ package com.livejournal.karino2.archiveimageresizer;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
+import android.support.v8.renderscript.Allocation;
+import android.support.v8.renderscript.RenderScript;
 
 import java.io.DataOutputStream;
 import java.io.File;
@@ -26,6 +28,15 @@ public class ZipConverter {
     ConversionSetting setting;
     int pageNum;
     File outDir;
+
+    ScriptC_fourbitgray grayScript;
+    RenderScript renderScript;
+
+    public ZipConverter(RenderScript rs, ScriptC_fourbitgray script) {
+        renderScript = rs;
+        grayScript = script;
+    }
+
 
     public void startConversion(ConversionSetting convSetting, ZipFile inputFile, File workingDir) throws IOException {
         input = inputFile;
@@ -91,9 +102,21 @@ public class ZipConverter {
             }
         }
 
-        // TODO: handle four bit grayscale.
+        if(setting.isEnableFourBitColor()) {
+            bmp = toGrayScaleFourBitGamma(bmp);
+        }
 
         return scaleTo(bmp, setting.getWidth(), setting.getHeight());
+    }
+
+    private Bitmap toGrayScaleFourBitGamma(Bitmap bmp) {
+        Allocation inputAlloc = Allocation.createFromBitmap(renderScript, bmp);
+        Bitmap res = Bitmap.createBitmap(bmp.getWidth(),
+                bmp.getHeight(), bmp.getConfig());
+        Allocation outputAlloc = Allocation.createFromBitmap(renderScript, res);
+        grayScript.forEach_fourBitGrayWithGamma(inputAlloc, outputAlloc);
+        outputAlloc.copyTo(res);
+        return res;
     }
 
     private Bitmap scaleTo(Bitmap bmp, int width, int height) {

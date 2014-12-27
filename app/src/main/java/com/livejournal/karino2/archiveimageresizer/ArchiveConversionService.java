@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v8.renderscript.RenderScript;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -23,6 +24,7 @@ import java.util.Comparator;
 import java.util.zip.ZipFile;
 
 public class ArchiveConversionService extends Service {
+
     enum State
     {
         DORMANT,
@@ -31,11 +33,12 @@ public class ArchiveConversionService extends Service {
         WRITE_PDF,
         CANCELING,
     }
-
     State state = State.DORMANT;
     NotificationManager notificationManager;
 
     final int STATUS_NOTIFICATION_ID = R.layout.activity_service_manage;
+
+
 
     public ArchiveConversionService() {
     }
@@ -282,7 +285,11 @@ public class ArchiveConversionService extends Service {
 
 
         private void convertingImages(String zipPath) throws IOException {
-            ZipConverter converter = new ZipConverter();
+            RenderScript rs = RenderScript.create(ArchiveConversionService.this);
+            ScriptC_fourbitgray script = new ScriptC_fourbitgray(rs);
+
+
+            ZipConverter converter = new ZipConverter(rs, script);
             converter.startConversion(getSetting(), new ZipFile(zipPath), getFileStoreDirectory());
 
             publishProgress(0, converter.getPageNum());
