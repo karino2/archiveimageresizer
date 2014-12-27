@@ -173,7 +173,7 @@ public class ArchiveConversionService extends Service {
     }
 
     public static File[] getAllImageFiles(File folder) throws IOException {
-        File[] slideFiles = folder.listFiles(new FilenameFilter() {
+        File[] imageFiles = folder.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String filename) {
                 if (filename.endsWith(".def"))
@@ -181,14 +181,14 @@ public class ArchiveConversionService extends Service {
                 return false;
             }
         });
-        Arrays.sort(slideFiles, new Comparator<File>() {
+        Arrays.sort(imageFiles, new Comparator<File>() {
             public int compare(File f1, File f2) {
                 return f1.getName().compareTo(f2.getName());
             }
 
         });
 
-        return slideFiles;
+        return imageFiles;
     }
     private void deleteAllFiles(File folder) {
         for(File file : folder.listFiles(new FileFilter() {
