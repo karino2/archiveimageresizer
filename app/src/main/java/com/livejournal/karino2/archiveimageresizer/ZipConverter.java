@@ -163,13 +163,10 @@ public class ZipConverter {
             canvas.drawBitmap(bmp, mat, paintForScale);
             return res;
 
-            // return Bitmap.createScaledBitmap(bmp, (int)(bmp.getWidth()*scaleY), height, true);
-
         }
         mat.setScale((float)scaleX, (float)scaleX);
         canvas.drawBitmap(bmp, mat, paintForScale);
         return res;
-        // return Bitmap.createScaledBitmap(bmp, width, (int)(bmp.getHeight()*scaleX), true);
     }
 
     private boolean notImage(ZipEntry ent) {

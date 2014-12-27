@@ -32,7 +32,6 @@ public class MainActivity extends ActionBarActivity {
         if(intent != null && intent.getAction() != null &&intent.getAction().equals(Intent.ACTION_VIEW))
         {
             Uri uri = intent.getData();
-            showMessage(uri.getPath());
             setTextToEditText(R.id.editTextFileUrl, uri.getPath());
         }
 
@@ -78,17 +77,6 @@ public class MainActivity extends ActionBarActivity {
             showMessage("File not exists: " + path);
             return;
         }
-        /*
-        SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
-
-        prefs.edit()
-                .putInt("WIDTH", getIntValue(R.id.editTextWidth))
-                .putInt("HEIGHT", getIntValue(R.id.editTextHeight))
-                .putBoolean("ENABLE_BLANK_REMOVE", getBooleanValue(R.id.checkBoxEnableBlankRemove))
-                .putBoolean("ENABLE_NOMBRE_REMOVE", getBooleanValue(R.id.checkBoxEnableNombreRemove))
-                .putBoolean("ENABLE_FOUR_BIT_COLOR", getBooleanValue(R.id.checkBoxFourBitColor))
-                .commit();
-                */
 
         Intent intent = new Intent(this, ArchiveConversionService.class);
         intent.setData(Uri.fromFile(new File(path)));
