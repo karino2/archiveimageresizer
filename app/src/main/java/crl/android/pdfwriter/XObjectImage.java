@@ -47,6 +47,37 @@ public class XObjectImage {
         this(document, bitmap, false);
 	}
 
+    public XObjectImage(PDFDocument document, byte[] deflatedImage, int width, int height) {
+        mIsBinary = true;
+
+        mWidth = width;
+        mHeight = height;
+        mDataSize = mWidth * mHeight * 3;
+
+        mDocument = document;
+        COMPRESSION_LEVEL = Deflater.BEST_COMPRESSION;
+        mProcessedBinaryImage = deflatedImage;
+        mId = Indentifiers.generateId(mProcessedBinaryImage);
+
+        mName = "/img" + (++mImageCount);
+    }
+
+    public byte[] getProcessedBinaryImage() {
+        return mProcessedBinaryImage;
+    }
+
+    public static XObjectImage createForDecodeOnly(Bitmap bitmap) {
+        return new XObjectImage(bitmap);
+    }
+    // for decode only
+    public XObjectImage(Bitmap bitmap) {
+        mIsBinary = true;
+        COMPRESSION_LEVEL = Deflater.BEST_COMPRESSION;
+
+        mProcessedBinaryImage = processBinaryImage(configureBitmap(bitmap));
+        mId = Indentifiers.generateId(mProcessedBinaryImage);
+    }
+
     public XObjectImage(PDFDocument document, Bitmap bitmap, boolean isBinary) {
         mIsBinary = isBinary;
         mDocument = document;

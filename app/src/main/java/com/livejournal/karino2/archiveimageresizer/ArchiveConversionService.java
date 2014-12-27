@@ -8,20 +8,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.zip.ZipFile;
 
 public class ArchiveConversionService extends Service {
     enum State
     {
         DORMANT,
-        CONVERTING,
+        START_CONVERTING,
+        DUMP_IMAGE,
+        WRITE_PDF,
         CANCELING,
     }
 
@@ -38,18 +45,64 @@ public class ArchiveConversionService extends Service {
         Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
+    public static File getFileStoreDirectory()  {
+        File dir = new File(Environment.getExternalStorageDirectory(), "ArchiveImageResizer");
+        return dir;
+    }
+
+
+    public static  void ensureDirExist(File dir) throws IOException {
+        if(!dir.exists()) {
+            if(!dir.mkdir()){
+                throw new IOException();
+            }
+        }
+    }
+
+    public boolean isConverting() {
+        return state == State.START_CONVERTING ||
+                state == State.DUMP_IMAGE ||
+                state == State.WRITE_PDF;
+    }
+
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        try {
+            ensureDirExist(getFileStoreDirectory());
+        } catch (IOException e) {
+            showMessage("Fail to create folder: " + e.getMessage());
+            return START_NOT_STICKY;
+        }
+
+
         notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         if(intent == null)
         {
-            showMessage("service recreate: TODO: support resume.");
-            stopSelf();
-            return START_NOT_STICKY;
+            // service recreation.
+            gotoState(State.values()[getPref().getInt("STATE", State.DORMANT.ordinal())]);
+            switch(state) {
+                case START_CONVERTING:
+                    startConvertingZip();
+                    break;
+                case DUMP_IMAGE:
+                    zipReadTask = new ZipConversionTask();
+                    zipReadTask.setStartFrom(readPageNum());
+                    zipReadTask.execute("");
+                    break;
+                case WRITE_PDF:
+                    startConvertingZip();
+                    break;
+                default:
+                    showMessage("Unknown resume state: ignore and finish: " + state.toString());
+                    stopSelf();
+                    return START_NOT_STICKY;
+            }
+            return START_STICKY;
         } else {
             if(intent.getBooleanExtra("REQUEST_CANCEL", false)) {
-                if(state == State.CONVERTING) {
-                    state = State.CANCELING;
+                if(isConverting()) {
+                    gotoState(State.CANCELING);
                     if(zipReadTask != null) {
                         zipReadTask.cancel(false);
                     }
@@ -58,61 +111,129 @@ public class ArchiveConversionService extends Service {
                 return START_NOT_STICKY;
             }
 
-            SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
+            String zipPath = intent.getData().getPath();
+            SharedPreferences prefs = getPref();
             prefs.edit()
+                    .putString("ZIP_PATH", zipPath)
                     .putInt("WIDTH", intent.getIntExtra("WIDTH", 560))
                     .putInt("HEIGHT", intent.getIntExtra("HEIGHT", 734))
                     .putBoolean("ENABLE_BLANK_REMOVE", intent.getBooleanExtra("ENABLE_BLANK_REMOVE", true))
                     .putBoolean("ENABLE_NOMBRE_REMOVE", intent.getBooleanExtra("ENABLE_NOMBRE_REMOVE", true))
                     .putBoolean("ENABLE_FOUR_BIT_COLOR", intent.getBooleanExtra("ENABLE_FOUR_BIT_COLOR", true))
+                    .putInt("PAGE_NUM", 0)
                     .commit();
+            gotoState(State.START_CONVERTING);
 
 
-            state = State.CONVERTING;
-            startConvertingZip(intent.getData().getPath());
+            startConvertingZip();
             showMessage("Start conversion...");
         }
         return START_STICKY;
     }
 
+    void gotoState(State newState) {
+        state = newState;
+        writeIntToPref("STATE", state.ordinal());
+    }
+
+    private void writeIntToPref(String prefName, int prefVal) {
+        SharedPreferences prefs = getPref();
+        prefs.edit()
+                .putInt(prefName, prefVal)
+                .commit();
+    }
+
+    private void writePageNum(int pageNum) {
+        writeIntToPref("PAGE_NUM", pageNum);
+    }
+    private int readPageNum() {
+        return getPref().getInt("PAGE_NUM", 0);
+    }
+
+    private SharedPreferences getPref() {
+        return getSharedPreferences("conv_pref", MODE_PRIVATE);
+    }
+
     ConversionSetting createConversionSetting()
     {
-        SharedPreferences prefs = getSharedPreferences("conv_pref", MODE_PRIVATE);
+        SharedPreferences prefs = getPref();
+        String zipPath = prefs.getString("ZIP_PATH", "");
         int width = prefs.getInt("WIDTH", 560);
         int height = prefs.getInt("HEIGHT", 734);
         boolean enableBlankRmv = prefs.getBoolean("ENABLE_BLANK_REMOVE", true);
         boolean enableNombreRmv = prefs.getBoolean("ENABLE_NOMBRE_REMOVE", true);
         boolean enableFourBitColor = prefs.getBoolean("ENABLE_FOUR_BIT_COLOR", true);
 
-        return new ConversionSetting(width, height, enableBlankRmv, enableNombreRmv, enableFourBitColor);
+        return new ConversionSetting(zipPath, width, height, enableBlankRmv, enableNombreRmv, enableFourBitColor);
     }
 
+    public static File[] getAllImageFiles(File folder) throws IOException {
+        File[] slideFiles = folder.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                if (filename.endsWith(".def"))
+                    return true;
+                return false;
+            }
+        });
+        Arrays.sort(slideFiles, new Comparator<File>() {
+            public int compare(File f1, File f2) {
+                return f1.getName().compareTo(f2.getName());
+            }
+
+        });
+
+        return slideFiles;
+    }
+    private void deleteAllFiles(File folder) {
+        for(File file : folder.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                if(pathname.isDirectory())
+                    return false;
+                return true;
+            }
+        })) {
+            file.delete();
+        }
+
+    }
+
+
     class ZipConversionTask extends AsyncTask<String, Integer, String> {
+        ConversionSetting setting;
+        ConversionSetting getSetting() {
+            if(setting == null)
+            {
+                setting = createConversionSetting();
+            }
+            return setting;
+        }
 
         @Override
         protected String doInBackground(String... arg0) {
-            String zipPath = arg0[0];
+
             exceptionMessage = null;
 
             try
             {
-                ZipConverter converter = new ZipConverter();
-                File zipFile = new File(zipPath);
-
-                String fileName = zipFile.getName();
-                File outputFile = new File(zipFile.getParentFile().getAbsolutePath(), fileName.substring(0, fileName.lastIndexOf("."))+"_small.pdf");
-                converter.startConversion(createConversionSetting(), new ZipFile(zipPath), outputFile);
-
-                publishProgress(0, converter.getPageNum());
-
-                int processedNum = 0;
-                while(converter.isRunning() && !isCancelled())
-                {
-                    converter.doOne();
-                    processedNum++;
-                    publishProgress(processedNum, converter.getPageNum());
+                while(isConverting()) {
+                    switch (state) {
+                        case START_CONVERTING:
+                            cleanWorkingFolder();
+                            gotoState(State.DUMP_IMAGE);
+                            break;
+                        case DUMP_IMAGE:
+                            convertingImages(getSetting().getZipPath());
+                            gotoState(State.WRITE_PDF);
+                            break;
+                        case WRITE_PDF:
+                            writeToPdf(createResultPDFFileFromZipPath(getSetting().getZipPath()));
+                            cleanWorkingFolder();
+                            gotoState(State.DORMANT);
+                    }
                 }
-                converter.done();
+
             }catch(IOException ioe)
             {
                 exceptionMessage = "IOException! " + ioe.getMessage();
@@ -120,6 +241,58 @@ public class ArchiveConversionService extends Service {
 
             return null;
         }
+
+        int startFrom = 0;
+        public void setStartFrom(int from) {
+            startFrom = from;
+        }
+
+        private void writeToPdf(File outputFile) throws IOException {
+
+            ConversionSetting setting = getSetting();
+            File[] allImages = getAllImageFiles(getFileStoreDirectory());
+            ImagePDFWriter writer = new ImagePDFWriter(outputFile, setting.getWidth(), setting.getHeight(), allImages.length);
+            ImageStore store = new ImageStore();
+
+            for(File file : allImages) {
+                store.readPage(file);
+                writer.writePage(store.getBins(), store.getWidth(), store.getHeight());
+            }
+            writer.done();
+
+        }
+
+        private File createResultPDFFileFromZipPath(String zipPath) {
+            File zipFile = new File(zipPath);
+
+            String fileName = zipFile.getName();
+            return new File(zipFile.getParentFile().getAbsolutePath(), fileName.substring(0, fileName.lastIndexOf("."))+"_small.pdf");
+        }
+
+
+        private void cleanWorkingFolder() {
+            File dir = getFileStoreDirectory();
+            deleteAllFiles(dir);
+        }
+
+
+        private void convertingImages(String zipPath) throws IOException {
+            ZipConverter converter = new ZipConverter();
+            converter.startConversion(getSetting(), new ZipFile(zipPath), getFileStoreDirectory());
+
+            publishProgress(0, converter.getPageNum());
+
+            int processedNum = startFrom;
+            converter.skipUntilStart(startFrom);
+            while(converter.isRunning() && !isCancelled())
+            {
+                converter.doOne();
+                processedNum++;
+                writePageNum(processedNum);
+                publishProgress(processedNum, converter.getPageNum());
+            }
+        }
+
         String exceptionMessage;
 
         @Override
@@ -141,7 +314,7 @@ public class ArchiveConversionService extends Service {
                 showNotificationMessage(exceptionMessage);
             else
                 showNotificationMessage("Conversion done.");
-            state = State.DORMANT;
+            gotoState(State.DORMANT);
             stopSelf();
         }
     }
@@ -203,10 +376,10 @@ public class ArchiveConversionService extends Service {
     }
 
     ZipConversionTask zipReadTask;
-    void startConvertingZip(String zipPath) {
+    void startConvertingZip() {
 
         zipReadTask = new ZipConversionTask();
-        zipReadTask.execute(zipPath);
+        zipReadTask.execute("");
     }
 
     @Override

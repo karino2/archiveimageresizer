@@ -112,4 +112,15 @@ public class AnalyzerTest extends ApplicationTestCase<Application> {
         assertTrue(actual.bottom < 2060);
         */
     }
+
+
+    enum TestEnum {
+        One,
+        Two,
+        Three
+    };
+    public void testEnumConversion() {
+        assertEquals(0, TestEnum.One.ordinal());
+        assertEquals(TestEnum.One, TestEnum.values()[0]);
+    }
 }

@@ -10,8 +10,10 @@ public class ConversionSetting {
     boolean enableRemoveBlank;
     boolean enableRemoveNombre;
     boolean enableFourBitColor;
-    public ConversionSetting(int w, int h, boolean isRemoveBlank, boolean isRemoveNombre, boolean isFourBitColor)
+    String zipPath;
+    public ConversionSetting(String path, int w, int h, boolean isRemoveBlank, boolean isRemoveNombre, boolean isFourBitColor)
     {
+        zipPath = path;
         width= w;
         height = h;
         enableRemoveBlank = isRemoveBlank;
@@ -24,6 +26,7 @@ public class ConversionSetting {
     public int getHeight() {
         return height;
     }
+    public String getZipPath() { return zipPath; }
     public boolean isEnableRemoveBlank() { return enableRemoveBlank; }
     public boolean isEnableRemoveNombre() { return enableRemoveNombre; }
     public boolean isEnableFourBitColor() { return enableFourBitColor; }

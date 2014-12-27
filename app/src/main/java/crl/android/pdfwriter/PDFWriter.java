@@ -183,6 +183,15 @@ public class PDFWriter {
         page.writeImagePageAndPurgeImage(mOutputStream, mPagesRef,
                 0, 0, bitmap.getWidth(), bitmap.getHeight(), xImage, Transformation.DEGREES_0_ROTATION);
     }
+    public void writeDeflatedImagePage(byte[] processedImage, int width, int height) throws IOException {
+        Page page = mCurrentPage;
+        final XObjectImage xImage = new XObjectImage(mDocument, processedImage, width, height);
+
+        page.writeImagePageAndPurgeImage(mOutputStream, mPagesRef,
+                0, 0, width, height, xImage, Transformation.DEGREES_0_ROTATION);
+    }
+
+
     public void writeFooter()  throws IOException {
         mDocument.writeFooter();
     }

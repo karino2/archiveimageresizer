@@ -4,7 +4,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +15,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import crl.android.pdfwriter.PDFWriter;
+import crl.android.pdfwriter.XObjectImage;
 
 /**
  * Created by karino on 12/17/14.
@@ -20,28 +23,17 @@ import crl.android.pdfwriter.PDFWriter;
 public class ZipConverter {
     ZipFile input;
     Enumeration<? extends ZipEntry> entries;
-    PDFWriter writer;
     ConversionSetting setting;
-    File output;
     int pageNum;
-    FileOutputStream outputStream;
+    File outDir;
 
-    public void startConversion(ConversionSetting convSetting, ZipFile inputFile, File outFile) throws IOException {
+    public void startConversion(ConversionSetting convSetting, ZipFile inputFile, File workingDir) throws IOException {
         input = inputFile;
         setting = convSetting;
-        output = outFile;
         entries = inputFile.entries();
+        outDir = workingDir;
 
         pageNum = countImageNum();
-        output.createNewFile();
-        outputStream = new FileOutputStream(output);
-        writer = new PDFWriter(setting.getWidth(), setting.getHeight(), outputStream);
-
-        writer.writeHeader();
-        writer.writeCatalogStream();
-        writer.writePagesHeader(pageNum);
-
-
     }
 
     public int getPageNum() {
@@ -61,21 +53,15 @@ public class ZipConverter {
 
 
 
-    public void done() throws IOException {
-        writer.writeFooter();
-        outputStream.close();
-        outputStream = null;
-    }
-
 
     int currentPage = 0;
     public void doOne() throws IOException
     {
-        ZipEntry ent = entries.nextElement();
-        while(notImage(ent)) {
-            ent = entries.nextElement();
-            if(ent == null)
-                return;
+        ZipEntry ent;
+        try {
+            ent = getNext();
+        }catch(ArrayIndexOutOfBoundsException e) {
+            return ;
         }
 
 
@@ -83,11 +69,13 @@ public class ZipConverter {
         Bitmap bmp = BitmapFactory.decodeStream(is);
         Bitmap resizedBmp = convertPage(bmp);
 
-        if(currentPage != 0)
-            writer.newOrphanPage();
-
+        writePage(resizedBmp, currentPage);
         currentPage++;
-        writer.writeImagePage(resizedBmp, true);
+    }
+
+    private void writePage(Bitmap resizedBmp, int pageNum) throws IOException {
+        ImageStore store = new ImageStore();
+        store.writePage(outDir, resizedBmp, pageNum);
     }
 
     private Bitmap convertPage(Bitmap bmp) {
@@ -131,4 +119,18 @@ public class ZipConverter {
     }
 
 
+    ZipEntry getNext() {
+        ZipEntry ent = entries.nextElement();
+        while(notImage(ent)) {
+            ent = entries.nextElement();
+            if(ent == null)
+                throw new ArrayIndexOutOfBoundsException();
+        }
+        return ent;
+    }
+    public void skipUntilStart(int skipUntil) {
+        for(int i = 0; i < skipUntil; i++) {
+            getNext();
+        }
+    }
 }

@@ -26,7 +26,7 @@ public class NovelAnalyzer {
     int[] projectedY;
     List<Interval> yIntervals;
     int yIntervalOffset;
-    boolean enableRemoveNombre = false;
+    boolean enableRemoveNombre = true;
 
     public void setEnableRemoveNombre(boolean isRemoveNombre) {
         enableRemoveNombre = isRemoveNombre;
@@ -268,7 +268,7 @@ public class NovelAnalyzer {
             return res;
         int nombreMaxHeight = Math.max(DEFAULT_NOMBRE_MAX_HEIGHT, target.getHeight()/20);
 
-        if(firstY.High < target.getHeight()*0.2 && firstY.getWidth() <= nombreMaxHeight)
+        if(firstY.High+yIntervalOffset < target.getHeight()*0.2 && firstY.getWidth() <= nombreMaxHeight)
         {
             // top nombre candidate.
             res = findNombreFromYInterval(firstY);
@@ -279,7 +279,7 @@ public class NovelAnalyzer {
         Interval lastY = getDarkEnoughLastInterval(yIntervals, projectedY);
         if(lastY == null)
             return res;
-        if(lastY.Low > target.getHeight()*0.8 && lastY.getWidth() <= DEFAULT_NOMBRE_MAX_HEIGHT) {
+        if(lastY.Low+yIntervalOffset > target.getHeight()*0.8 && lastY.getWidth() <= DEFAULT_NOMBRE_MAX_HEIGHT) {
             return findNombreFromYInterval(lastY);
         }
 
