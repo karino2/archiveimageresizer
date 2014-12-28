@@ -84,16 +84,6 @@ public class AnalyzerTest extends ApplicationTestCase<Application> {
         assertEquals(180, actual.get(2).High);
     }
 
-    public void testFindNombre() throws IOException {
-        Bitmap testBmp = loadBitmap("test_page.png");
-        NovelAnalyzer analyzer = new NovelAnalyzer();
-        testBmp = analyzer.prescale(testBmp);
-        analyzer.setTargetAndSetup(testBmp);
-
-        Rect actual = analyzer.findNombre();
-        assertNotSame(0, actual.width());
-    }
-
     public void testFindWholeRegionWithoutBlank() throws IOException {
         Bitmap testBmp = loadBitmap("test_page.png");
         NovelAnalyzer analyzer = new NovelAnalyzer();
@@ -113,6 +103,17 @@ public class AnalyzerTest extends ApplicationTestCase<Application> {
         */
     }
 
+    public void testFindWholeRegionWithoutBlank2() throws IOException {
+        Bitmap testBmp = loadBitmap("test_page2.png");
+        NovelAnalyzer analyzer = new NovelAnalyzer();
+
+        Rect actual = analyzer.findWholeRegionWithoutBlank(testBmp);
+        // Rect(152, 229 - 1273, 2038)
+        assertEquals(152, actual.left);
+        assertEquals(229, actual.top);
+        assertEquals(1273, actual.right);
+        assertEquals(2038, actual.bottom);
+    }
 
     enum TestEnum {
         One,

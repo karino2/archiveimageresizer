@@ -3,6 +3,7 @@ package com.livejournal.karino2.archiveimageresizer;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,8 +54,15 @@ public class NovelAnalyzer {
             return null;
 
         try {
-            Rect nombreRect = findNombre();
-            Rect validRect = findRegionWithoutBlank(nombreRect);
+            List<Interval> nombreLikeIntervals = findNombreLikeIntervals();
+            List<Interval> intervalsWithoutNombres = new ArrayList<Interval>(yIntervals);
+            intervalsWithoutNombres.removeAll(nombreLikeIntervals);
+            Rect validRect = findValidRegionFromIntervals(intervalsWithoutNombres);
+            if(validRect == null || tooSmallValidRect(validRect)) {
+                validRect = findValidRegionFromIntervals(yIntervals); // not remove nombre like region.
+                if(tooSmallValidRect(validRect))
+                    return null;
+            }
             validRect = extendValidRegionIfEdge(validRect);
             validRect = expandRect(validRect, FINAL_SWELL_SIZE);
             return validRect;
@@ -63,6 +71,11 @@ public class NovelAnalyzer {
             return null;
         }
 
+    }
+
+    private boolean tooSmallValidRect(Rect validRect) {
+        return validRect.width() < target.getWidth()/2 ||
+                validRect.height() < target.getHeight()/2;
     }
 
     private Rect expandRect(Rect validRect, int swell_size) {
@@ -121,54 +134,11 @@ public class NovelAnalyzer {
         return new Rect(newLeft, newTop, newRight, newBottom);
     }
 
-    Interval findFormerFromTail(List<Interval> intervals, int lowValue) {
-        for(int i = 0; i < intervals.size(); i++){
-            Interval interval = intervals.get(intervals.size()-i-1);
-            if(interval.Low < lowValue)
-                return interval;
-        }
-        return null;
-    }
-
-
-    Interval findLater(List<Interval> intervals, int lowValue) {
-        for(Interval interval : intervals) {
-            if(interval.Low > lowValue)
-                return interval;
-        }
-        return null;
-    }
-
-    int topWithoutNombre(Rect nombreRect) {
-        Interval topInt = getFirstInterval(yIntervals);
-        if(nombreRect.width() == 0)
-            return topInt.Low;
-        if(nombreRect.top < target.getHeight()/2) {
-            Interval top2 = findLater(yIntervals, nombreRect.bottom);
-            if (top2 != null) {
-                return top2.Low;
-            }
-        }
-        return topInt.Low;
-    }
-
-    int bottomWithoutNombre(Rect nombreRect) {
-        Interval bottomInt = getLastInterval(yIntervals);
-        if(nombreRect.width() == 0)
-            return bottomInt.High;
-
-        if(nombreRect.top >= target.getHeight()/2) {
-            Interval bottom2 = findFormerFromTail(yIntervals, nombreRect.top);
-            if (bottom2 != null) {
-                return bottom2.High;
-            }
-        }
-        return bottomInt.High;
-    }
-
-    private Rect findRegionWithoutBlank(Rect nombreRect) {
-        int top = topWithoutNombre(nombreRect);
-        int bottom = bottomWithoutNombre(nombreRect);
+    private Rect findValidRegionFromIntervals(List<Interval> intWithoutNombres) {
+        if(intWithoutNombres.size() == 0)
+            return null;
+        int top = getDarkEnoughFirstInterval(intWithoutNombres, projectedY).Low+yIntervalOffset;
+        int bottom = getDarkEnoughLastInterval(intWithoutNombres, projectedY).High+yIntervalOffset;
 
         Rect checkRegion = new Rect(BLANK_IGNORE_LEFT, top, checkRegionRight(), bottom);
         int[] projectedX = analyzer.projectToX(checkRegion, ACC_LIMIT);
@@ -180,11 +150,12 @@ public class NovelAnalyzer {
             return null;
         }
 
-        Interval leftInt = getFirstInterval(xIntervals);
-        Interval rightInt = getLastInterval(xIntervals);
+        Interval leftInt = getDarkEnoughFirstInterval(xIntervals, projectedX);
+        Interval rightInt = getDarkEnoughLastInterval(xIntervals, projectedX);
 
-        return new Rect(leftInt.Low+xOffset, top+yIntervalOffset, rightInt.High+xOffset, bottom+yIntervalOffset);
+        return new Rect(leftInt.Low+xOffset, top, rightInt.High+xOffset, bottom);
     }
+
 
     public int maxValue(Interval interval, int[] vals)
     {
@@ -210,82 +181,45 @@ public class NovelAnalyzer {
         return intervals.get(intervals.size()-1);
     }
 
+    boolean isDarkEnough(Interval cur, int[] projectedVals) {
+        return (maxValue(cur, projectedVals) >= ACC_DARK_ENOUGH);
+    }
+
     Interval getDarkEnoughFirstInterval(List<Interval> intervals, int[] projectedVals)
     {
         for(Interval cur : intervals) {
-            if (maxValue(cur, projectedVals) < ACC_DARK_ENOUGH)
+            if (!isDarkEnough(cur, projectedVals))
                 continue;
             return cur;
         }
         return null;
     }
 
-    Interval getDarkEnoughLastInterval(List<Interval> intervals, int[] projectedVals)
-    {
-        for(int i = 0; i < intervals.size(); i++) {
-            Interval cur = intervals.get(intervals.size()-i-1);
-            int middle = (cur.Low + cur.High) / 2;
-            if (projectedVals[middle] < ACC_DARK_ENOUGH)
+    Interval getDarkEnoughLastInterval(List<Interval> intervals, int[] projectedVals) {
+        for (int i = 0; i < intervals.size(); i++) {
+            Interval cur = intervals.get(intervals.size() - i - 1);
+            if (!isDarkEnough(cur, projectedVals))
                 continue;
             return cur;
         }
         return null;
-    }
-
-    private Rect findNombreFromYInterval(Interval yInterval)
-    {
-        Rect res = new Rect(0, 0, 0, 0);
-        if(!enableRemoveNombre)
-            return res;
-        Rect checkRegion = new Rect(BLANK_IGNORE_LEFT, yInterval.Low+yIntervalOffset, checkRegionRight(), yInterval.High+yIntervalOffset);
-        int[] projectedX = analyzer.projectToX(checkRegion, GROUP_REGION_VERTICAL_LIMIT);
-        int xOffset = checkRegion.left;
-        List<Interval> xIntervals = analyzer.splitToIntervalsWithMelt(projectedX, GROUP_REGION_VERTICAL_LIMIT, INITIAL_SUPPOSED_CHAR_WIDTH);
-        Interval firstX = getFirstInterval(xIntervals);
-
-        // if firstX is null, there are no interval, i.e. no last interval, either.
-        if(firstX != null)
-        {
-            if(firstX.Low+xOffset < target.getWidth()*0.3)
-            {
-                res.set(firstX.Low+xOffset, yInterval.Low+yIntervalOffset, firstX.High+xOffset, yInterval.High+yIntervalOffset);
-                return res;
-            }
-            Interval lastX = getLastInterval(xIntervals);
-            if(lastX.Low+xOffset > target.getWidth()*0.7)
-            {
-                res.set(lastX.Low+xOffset, yInterval.Low+yIntervalOffset, lastX.High+xOffset, yInterval.High+yIntervalOffset);
-                return res;
-            }
-
-            // TODO: check center here.
-        }
-        return res;
-
     }
 
     // make public for test purpose.
-    public Rect findNombre() {
-        Rect res = new Rect(0, 0, 0, 0); // width=0 means invalid.
-        Interval firstY = getDarkEnoughFirstInterval(yIntervals, projectedY);
-        // if firstY is null, there are no dark enough interval.
-        if(firstY == null)
-            return res;
+    public List<Interval> findNombreLikeIntervals() {
+        List<Interval> res = new ArrayList<Interval>();
+
+
         int nombreMaxHeight = Math.max(DEFAULT_NOMBRE_MAX_HEIGHT, target.getHeight()/20);
+        for(Interval interval : yIntervals) {
 
-        if(firstY.High+yIntervalOffset < target.getHeight()*0.2 && firstY.getWidth() <= nombreMaxHeight)
-        {
-            // top nombre candidate.
-            res = findNombreFromYInterval(firstY);
-            if(res.width() != 0)
-                return res;
-        }
 
-        Interval lastY = getDarkEnoughLastInterval(yIntervals, projectedY);
-        if(lastY == null)
-            return res;
-        if(lastY.Low+yIntervalOffset > target.getHeight()*0.8 && lastY.getWidth() <= DEFAULT_NOMBRE_MAX_HEIGHT) {
-            return findNombreFromYInterval(lastY);
+            if(interval.High+yIntervalOffset < target.getHeight()*0.2 && interval.getWidth() <= nombreMaxHeight)
+            {
+                res.add(interval);
+            } else if(interval.Low+yIntervalOffset > target.getHeight()*0.8 && interval.getWidth() <= DEFAULT_NOMBRE_MAX_HEIGHT) {
+                res.add(interval);
+            }
         }
 
         return res;
