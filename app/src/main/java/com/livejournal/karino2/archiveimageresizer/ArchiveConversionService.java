@@ -84,25 +84,8 @@ public class ArchiveConversionService extends Service {
         if(intent == null)
         {
             // service recreation.
-            gotoState(State.values()[getPref().getInt("STATE", State.DORMANT.ordinal())]);
-            switch(state) {
-                case START_CONVERTING:
-                    startConvertingZip();
-                    break;
-                case DUMP_IMAGE:
-                    zipReadTask = new ZipConversionTask();
-                    zipReadTask.setStartFrom(readPageNum());
-                    zipReadTask.execute("");
-                    break;
-                case WRITE_PDF:
-                    startConvertingZip();
-                    break;
-                default:
-                    showMessage("Unknown resume state: ignore and finish: " + state.toString());
-                    stopSelf();
-                    return START_NOT_STICKY;
-            }
-            return START_STICKY;
+            gotoState(readState());
+            return resumeConversion();
         } else {
             if(intent.getBooleanExtra("REQUEST_CANCEL", false)) {
                 if(isConverting()) {
@@ -118,6 +101,14 @@ public class ArchiveConversionService extends Service {
             if(isConverting()) {
                 showMessage("TODO: support queueing, ignore second request now.");
                 return START_NOT_STICKY;
+            }
+
+            state = readState();
+            if(isConverting())
+            {
+                // kill-ed during conversion but new task comming. Need to resume as if it is resumed by system.
+                showMessage("TODO: support queueing, ignore second request now. 2");
+                return resumeConversion();
             }
 
             String zipPath = intent.getData().getPath();
@@ -138,6 +129,31 @@ public class ArchiveConversionService extends Service {
             showMessage("Start conversion...");
         }
         return START_STICKY;
+    }
+
+    private int resumeConversion() {
+        switch(state) {
+            case START_CONVERTING:
+                startConvertingZip();
+                break;
+            case DUMP_IMAGE:
+                zipReadTask = new ZipConversionTask();
+                zipReadTask.setStartFrom(readPageNum());
+                zipReadTask.execute("");
+                break;
+            case WRITE_PDF:
+                startConvertingZip();
+                break;
+            default:
+                showMessage("Unknown resume state: ignore and finish: " + state.toString());
+                stopSelf();
+                return START_NOT_STICKY;
+        }
+        return START_STICKY;
+    }
+
+    private State readState() {
+        return State.values()[getPref().getInt("STATE", State.DORMANT.ordinal())];
     }
 
     void gotoState(State newState) {
