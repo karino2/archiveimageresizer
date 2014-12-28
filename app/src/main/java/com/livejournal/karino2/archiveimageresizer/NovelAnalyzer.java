@@ -58,7 +58,7 @@ public class NovelAnalyzer {
             List<Interval> intervalsWithoutNombres = new ArrayList<Interval>(yIntervals);
             intervalsWithoutNombres.removeAll(nombreLikeIntervals);
             Rect validRect = findValidRegionFromIntervals(intervalsWithoutNombres);
-            if(validRect == null || tooSmallValidRect(validRect)) {
+            if(nombreLikeIntervals.size() > 0 && (validRect == null || tooSmallValidRect(validRect))) {
                 validRect = findValidRegionFromIntervals(yIntervals); // not remove nombre like region.
                 if(tooSmallValidRect(validRect))
                     return null;
@@ -208,7 +208,8 @@ public class NovelAnalyzer {
     // make public for test purpose.
     public List<Interval> findNombreLikeIntervals() {
         List<Interval> res = new ArrayList<Interval>();
-
+        if(!enableRemoveNombre)
+            return res;
 
         int nombreMaxHeight = Math.max(DEFAULT_NOMBRE_MAX_HEIGHT, target.getHeight()/20);
         for(Interval interval : yIntervals) {
