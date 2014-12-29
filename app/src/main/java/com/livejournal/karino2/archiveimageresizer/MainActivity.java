@@ -1,6 +1,9 @@
 package com.livejournal.karino2.archiveimageresizer;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -11,6 +14,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -22,6 +26,7 @@ import java.io.File;
 public class MainActivity extends ActionBarActivity {
 
     static final int REQUEST_PICK_ZIP = 1;
+    static final int DIALOG_ID_ABOUT = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,6 +135,20 @@ public class MainActivity extends ActionBarActivity {
         return true;
     }
 
+    private AlertDialog createAbout() {
+        final WebView webView = new WebView(this);
+        webView.loadUrl("file:///android_asset/licenses.html");
+        return new AlertDialog.Builder(this).setTitle(R.string.about_title)
+                .setView(webView)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, final int whichButton) {
+                        dialog.dismiss();
+                    }
+                }).create();
+
+    }
+
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -138,10 +157,20 @@ public class MainActivity extends ActionBarActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.menu_id_about) {
+            showDialog(DIALOG_ID_ABOUT);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch(id) {
+            case DIALOG_ID_ABOUT:
+                return createAbout();
+        }
+        return super.onCreateDialog(id);
     }
 }
