@@ -103,4 +103,25 @@
         android:layout_alignLeft="@+id/checkBoxEnableNombreRemove"
         android:layout_alignStart="@+id/checkBoxEnableNombreRemove"
         android:checked="true" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_split_enable"
+        android:id="@+id/checkBoxEnableSplit"
+        android:layout_below="@+id/checkBoxFourBitColor"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/editTextSplitPage"
+        android:enabled="false"
+        android:text="200"
+        android:layout_below="@+id/checkBoxEnableSplit"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>

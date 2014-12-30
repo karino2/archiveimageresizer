@@ -14,4 +14,5 @@
     <string name="label_four_bit_color">Reduce color to 4bit gray scale with gamma collection</string>
     <string name="menu_about">About</string>
     <string name="about_title">About</string>
+    <string name="label_split_enable">Split result file by each following pages.</string>
 </resources>

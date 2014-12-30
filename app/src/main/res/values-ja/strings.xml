@@ -13,4 +13,5 @@
     <string name="label_four_bit_color">ガンマ補正した16階調グレースケールに</string>
     <string name="menu_about">About</string>
     <string name="about_title">About</string>
+    <string name="label_split_enable">結果のファイルを下記のページ数ごとに分割</string>
 </resources>

@@ -121,6 +121,8 @@ public class ArchiveConversionService extends Service {
                     .putBoolean("ENABLE_NOMBRE_REMOVE", intent.getBooleanExtra("ENABLE_NOMBRE_REMOVE", true))
                     .putBoolean("ENABLE_FOUR_BIT_COLOR", intent.getBooleanExtra("ENABLE_FOUR_BIT_COLOR", true))
                     .putInt("PAGE_NUM", 0)
+                    .putInt("SPLIT_PAGE", intent.getIntExtra("SPLIT_PAGE", 200))
+                    .putBoolean("ENABLE_SPLIT", intent.getBooleanExtra("ENABLE_SPLIT", false))
                     .commit();
             gotoState(State.START_CONVERTING);
 
@@ -188,8 +190,11 @@ public class ArchiveConversionService extends Service {
         boolean enableBlankRmv = prefs.getBoolean("ENABLE_BLANK_REMOVE", true);
         boolean enableNombreRmv = prefs.getBoolean("ENABLE_NOMBRE_REMOVE", true);
         boolean enableFourBitColor = prefs.getBoolean("ENABLE_FOUR_BIT_COLOR", true);
+        boolean enableSplit = prefs.getBoolean("ENABLE_SPLIT", true);
+        int splitPage = prefs.getInt("SPLIT_PAGE", 200);
 
-        return new ConversionSetting(zipPath, width, height, enableBlankRmv, enableNombreRmv, enableFourBitColor);
+        return new ConversionSetting(zipPath, width, height, enableBlankRmv, enableNombreRmv, enableFourBitColor,
+                enableSplit, splitPage);
     }
 
     public static File[] getAllImageFiles(File folder) throws IOException {
@@ -253,7 +258,7 @@ public class ArchiveConversionService extends Service {
                             gotoState(State.WRITE_PDF);
                             break;
                         case WRITE_PDF:
-                            writeToPdf(createResultPDFFileFromZipPath(getSetting().getZipPath()));
+                            writeToPdf();
                             cleanWorkingFolder();
                             gotoState(State.DORMANT);
                     }
@@ -272,27 +277,63 @@ public class ArchiveConversionService extends Service {
             startFrom = from;
         }
 
-        private void writeToPdf(File outputFile) throws IOException {
+        private void writeToPdf() throws IOException {
 
-            ConversionSetting setting = getSetting();
             File[] allImages = getAllImageFiles(getFileStoreDirectory());
-            ImagePDFWriter writer = new ImagePDFWriter(outputFile, setting.getWidth(), setting.getHeight(), allImages.length);
             ImageStore store = new ImageStore();
 
-            for(File file : allImages) {
+            ConversionSetting setting = getSetting();
+            if(setting.isEnableSplit()) {
+                int splitPageNum = setting.getSplitPage();
+                for(int fileIndex = 0; fileIndex < (allImages.length-1)/splitPageNum+1; fileIndex++) {
+                    int begin = fileIndex*splitPageNum;
+                    int end = Math.min(allImages.length, (fileIndex+1)*splitPageNum);
+                    writeImagesToPdf(setting, allImages, store, begin, end, fileIndex);
+                }
+
+            }else {
+                writeImagesToPdf(setting, allImages, store, 0, allImages.length, 0);
+            }
+
+        }
+
+        private void writeImagesToPdf(ConversionSetting setting, File[] allImages, ImageStore store, int begin, int end, int fileIndex) throws IOException {
+            String zipPath = setting.getZipPath();
+
+
+            File outputFile = createResultPDFFileFromZipPath(zipPath, fileIndex);
+
+            ImagePDFWriter writer = new ImagePDFWriter(outputFile, setting.getWidth(), setting.getHeight(), end-begin);
+
+            for(int i = begin; i < end; i++) {
+                File file = allImages[i];
                 store.readPage(file);
                 writer.writePage(store.getBins(), store.getWidth(), store.getHeight());
             }
             writer.done();
-
         }
 
-        private File createResultPDFFileFromZipPath(String zipPath) {
+        private File zipHoldingFolder(String zipPath) {
+            File zipFile = new File(zipPath);
+            return zipFile.getParentFile();
+        }
+
+        private String getBaseName(String zipPath) {
             File zipFile = new File(zipPath);
 
             String fileName = zipFile.getName();
-            return new File(zipFile.getParentFile().getAbsolutePath(), fileName.substring(0, fileName.lastIndexOf("."))+"_small.pdf");
+            return fileName.substring(0, fileName.lastIndexOf("."));
         }
+
+        private File createResultPDFFileFromZipPath(String zipPath) {
+            return new File(zipHoldingFolder(zipPath).getAbsolutePath(), getBaseName(zipPath) +"_small.pdf");
+        }
+
+        private File createResultPDFFileFromZipPath(String zipPath, int fileIndex) {
+            return new File(zipHoldingFolder(zipPath).getAbsolutePath(),
+                    String.format("%s_small_%02d.pdf", getBaseName(zipPath), fileIndex));
+        }
+
 
 
         private void cleanWorkingFolder() {
@@ -342,7 +383,7 @@ public class ArchiveConversionService extends Service {
             if(exceptionMessage != null)
                 showNotificationMessage(exceptionMessage);
             else
-                showFinishNotification(createResultPDFFileFromZipPath(getSetting().getZipPath()));
+                showFinishNotification(createResultPDFFileFromZipPath(getSetting().getZipPath(), 0));
             gotoState(State.DORMANT);
             stopSelf();
         }

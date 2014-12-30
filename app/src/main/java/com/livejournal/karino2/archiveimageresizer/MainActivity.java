@@ -17,6 +17,7 @@ import android.view.View;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -58,6 +59,15 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+        CheckBox cb = (CheckBox)findViewById(R.id.checkBoxEnableSplit);
+        cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                EditText et = findEditText(R.id.editTextSplitPage);
+                et.setEnabled(isChecked);
+            }
+        });
+
 
     }
 
@@ -90,6 +100,9 @@ public class MainActivity extends ActionBarActivity {
         intent.putExtra("ENABLE_BLANK_REMOVE", getBooleanValue(R.id.checkBoxEnableBlankRemove));
         intent.putExtra("ENABLE_NOMBRE_REMOVE", getBooleanValue(R.id.checkBoxEnableNombreRemove));
         intent.putExtra("ENABLE_FOUR_BIT_COLOR", getBooleanValue(R.id.checkBoxFourBitColor));
+        intent.putExtra("ENABLE_SPLIT", getBooleanValue(R.id.checkBoxEnableSplit));
+        intent.putExtra("SPLIT_PAGE", getIntValue(R.id.editTextSplitPage));
+
         startService(intent);
     }
 

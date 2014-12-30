@@ -10,8 +10,11 @@ public class ConversionSetting {
     boolean enableRemoveBlank;
     boolean enableRemoveNombre;
     boolean enableFourBitColor;
+    boolean enableSplit;
+    int splitPage;
+
     String zipPath;
-    public ConversionSetting(String path, int w, int h, boolean isRemoveBlank, boolean isRemoveNombre, boolean isFourBitColor)
+    public ConversionSetting(String path, int w, int h, boolean isRemoveBlank, boolean isRemoveNombre, boolean isFourBitColor, boolean isSplit, int splitPgs)
     {
         zipPath = path;
         width= w;
@@ -19,6 +22,8 @@ public class ConversionSetting {
         enableRemoveBlank = isRemoveBlank;
         enableRemoveNombre = isRemoveNombre;
         enableFourBitColor = isFourBitColor;
+        enableSplit = isSplit;
+        splitPage = splitPgs;
     }
     public int getWidth() {
         return width;
@@ -30,4 +35,6 @@ public class ConversionSetting {
     public boolean isEnableRemoveBlank() { return enableRemoveBlank; }
     public boolean isEnableRemoveNombre() { return enableRemoveNombre; }
     public boolean isEnableFourBitColor() { return enableFourBitColor; }
+    public boolean isEnableSplit() { return enableSplit; }
+    public int getSplitPage() { return splitPage; }
 }
