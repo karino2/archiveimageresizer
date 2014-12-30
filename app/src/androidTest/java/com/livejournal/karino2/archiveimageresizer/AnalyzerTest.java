@@ -95,6 +95,8 @@ public class AnalyzerTest extends ApplicationTestCase<Application> {
         assertEquals(236, actual.top);
         assertEquals(1355, actual.right);
         assertEquals(2052, actual.bottom);
+
+        assertTrue(analyzer.isTopToBottom());
         /*
         assertTrue(actual.left > 150);
         assertTrue(actual.top > 200);
@@ -113,6 +115,20 @@ public class AnalyzerTest extends ApplicationTestCase<Application> {
         assertEquals(229, actual.top);
         assertEquals(1273, actual.right);
         assertEquals(2038, actual.bottom);
+        assertTrue(analyzer.isTopToBottom());
+    }
+
+    public void testFindWholeRegionWithoutBlank3() throws IOException {
+        Bitmap testBmp = loadBitmap("test_page3.png");
+        NovelAnalyzer analyzer = new NovelAnalyzer();
+        testBmp = analyzer.prescale(testBmp);
+
+        Rect actual = analyzer.findWholeRegionWithoutBlank(testBmp);
+        assertTrue(!analyzer.isTopToBottom());
+        assertEquals(122, actual.left);
+        assertEquals(106, actual.top);
+        assertEquals(1001, actual.right);
+        assertEquals(1475, actual.bottom);
     }
 
     enum TestEnum {

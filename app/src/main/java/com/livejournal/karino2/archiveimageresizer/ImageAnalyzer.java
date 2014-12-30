@@ -34,6 +34,31 @@ public class ImageAnalyzer {
     final int MONO_THRESHOLD_UPPER = 200;
     final int MONO_THRESHOLD_LOWER = 0;
 
+    public int[][] projectToXY(Rect region, int limit)
+    {
+        int[] pixs = getPixels();
+        int[] projectX = new int[region.width()];
+        int[] projectY = new int[region.height()];
+        for(int y = 0; y < region.height(); y++) {
+            for(int x = 0; x < region.width(); x++)
+            {
+                if(projectX[x] >=limit && projectY[y] >= limit)
+                    continue;
+
+                int pos = position(x+region.left, y+region.top);
+
+                // if(insideThreshold(pixs[pos]))
+                int px = (pixs[pos] &0xff0000)>>16; // We use channel RED to check monochrome threshold.
+                if(px <= MONO_THRESHOLD_UPPER && px >= MONO_THRESHOLD_LOWER)
+                {
+                    projectY[y] += 1;
+                    projectX[x] += 1;
+                }
+            }
+        }
+        return new int[][] { projectX, projectY };
+    }
+
 
     public int[] projectToY(Rect region, int limit)
     {

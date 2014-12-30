@@ -16,7 +16,7 @@ public class NovelAnalyzer {
     final int BLANK_IGNORE_TOP = 10;
     final int BLANK_IGNORE_BOTTOM = 10;
     final int ACC_DARK_ENOUGH = 20;
-    final int DEFAULT_NOMBRE_MAX_HEIGHT = 40;
+    final int DEFAULT_NOMBRE_MAX_HEIGHT = 40; // also used as width for LTR case.
     final int GROUP_REGION_VERTICAL_LIMIT = 5;
     final int PRE_SCALE_DOWN_SIZE = 1600;
     final int FINAL_SWELL_SIZE = 5;
@@ -28,6 +28,10 @@ public class NovelAnalyzer {
     List<Interval> yIntervals;
     int yIntervalOffset;
     boolean enableRemoveNombre = true;
+
+    int [] projectedX;
+    List<Interval> xIntervals;
+    int xIntervalOffset;
 
     public void setEnableRemoveNombre(boolean isRemoveNombre) {
         enableRemoveNombre = isRemoveNombre;
@@ -53,24 +57,52 @@ public class NovelAnalyzer {
         if(yIntervals.size() < 0)
             return null;
 
+
         try {
-            List<Interval> nombreLikeIntervals = findNombreLikeIntervals();
-            List<Interval> intervalsWithoutNombres = new ArrayList<Interval>(yIntervals);
-            intervalsWithoutNombres.removeAll(nombreLikeIntervals);
-            Rect validRect = findValidRegionFromIntervals(intervalsWithoutNombres);
-            if(nombreLikeIntervals.size() > 0 && (validRect == null || tooSmallValidRect(validRect))) {
-                validRect = findValidRegionFromIntervals(yIntervals); // not remove nombre like region.
-                if(tooSmallValidRect(validRect))
-                    return null;
+            if(isTopToBottom()) {
+                return findWholeRegionWithoutBlankTTB();
+            }else {
+                return findWholeRegionWIthoutBlankLTR();
             }
-            validRect = extendValidRegionIfEdge(validRect);
-            validRect = expandRect(validRect, FINAL_SWELL_SIZE);
-            return validRect;
+
         }catch(NullPointerException ne) // currently, no dark enough yinterval case occure.
         {
             return null;
         }
 
+    }
+
+    private Rect findWholeRegionWIthoutBlankLTR() {
+        List<Interval> nombreLikeIntervals = findNombreLikeIntervalsLTR();
+        List<Interval> intervalsWithoutNombres = new ArrayList<Interval>(xIntervals);
+        intervalsWithoutNombres.removeAll(nombreLikeIntervals);
+        Rect validRect = findValidRegionFromXIntervals(intervalsWithoutNombres);
+        if (nombreLikeIntervals.size() > 0 && (validRect == null || tooSmallValidRect(validRect))) {
+            validRect = findValidRegionFromXIntervals(xIntervals); // not remove nombre like region.
+            if (tooSmallValidRect(validRect))
+                return null;
+        }
+        return postExpand(validRect);
+    }
+
+    private Rect postExpand(Rect validRect) {
+        validRect = extendValidRegionIfEdge(validRect);
+        validRect = expandRect(validRect, FINAL_SWELL_SIZE);
+        return validRect;
+    }
+
+
+    private Rect findWholeRegionWithoutBlankTTB() {
+        List<Interval> nombreLikeIntervals = findNombreLikeIntervalsTTB();
+        List<Interval> intervalsWithoutNombres = new ArrayList<Interval>(yIntervals);
+        intervalsWithoutNombres.removeAll(nombreLikeIntervals);
+        Rect validRect = findValidRegionFromYIntervals(intervalsWithoutNombres);
+        if (nombreLikeIntervals.size() > 0 && (validRect == null || tooSmallValidRect(validRect))) {
+            validRect = findValidRegionFromYIntervals(yIntervals); // not remove nombre like region.
+            if (tooSmallValidRect(validRect))
+                return null;
+        }
+        return postExpand(validRect);
     }
 
     private boolean tooSmallValidRect(Rect validRect) {
@@ -90,12 +122,23 @@ public class NovelAnalyzer {
         return rect;
     }
 
+
+    public boolean isTopToBottom() {
+        return xIntervals.size() > yIntervals.size();
+    }
+
     private void setupProjection() {
         Rect validRegion = new Rect(BLANK_IGNORE_LEFT, BLANK_IGNORE_TOP, checkRegionRight(), checkRegionBottom());
 
-        projectedY = analyzer.projectToY(validRegion, ACC_LIMIT);
+        int[][] projecteds = analyzer.projectToXY(validRegion, ACC_LIMIT);
+        projectedX = projecteds[0];
+        projectedY = projecteds[1];
+
         yIntervals = analyzer.splitToIntervalsWithMelt(projectedY, 1, 10);
         yIntervalOffset = validRegion.top;
+
+        xIntervals = analyzer.splitToIntervalsWithMelt(projectedX, 1, 10);
+        xIntervalOffset = validRegion.left;
     }
 
     public void setTargetAndSetup(Bitmap bmp) {
@@ -134,24 +177,48 @@ public class NovelAnalyzer {
         return new Rect(newLeft, newTop, newRight, newBottom);
     }
 
-    private Rect findValidRegionFromIntervals(List<Interval> intWithoutNombres) {
+    private Rect findValidRegionFromXIntervals(List<Interval> intWithoutNombres) {
+        if(intWithoutNombres.size() == 0)
+            return null;
+        int left = getDarkEnoughFirstInterval(intWithoutNombres, projectedX).Low+ xIntervalOffset;
+        int right = getDarkEnoughLastInterval(intWithoutNombres, projectedX).High+ xIntervalOffset;
+
+        Rect checkRegion = new Rect(left, BLANK_IGNORE_TOP, right, checkRegionBottom());
+        int[] localProjectedY = analyzer.projectToY(checkRegion, ACC_LIMIT);
+        int yOffset = checkRegion.top;
+        // TODO: should I change threshold of vertical and horizontal?
+        List<Interval> localYIntervals = analyzer.splitToIntervalsWithMelt(localProjectedY, 1, 10);
+
+        if(localYIntervals.size() == 0) {
+            return null;
+        }
+
+        Interval topInt = getDarkEnoughFirstInterval(localYIntervals, localProjectedY);
+        Interval bottomInt = getDarkEnoughLastInterval(localYIntervals, localProjectedY);
+
+        return new Rect(left, topInt.Low + yOffset, right, bottomInt.High+yOffset);
+    }
+
+
+
+    private Rect findValidRegionFromYIntervals(List<Interval> intWithoutNombres) {
         if(intWithoutNombres.size() == 0)
             return null;
         int top = getDarkEnoughFirstInterval(intWithoutNombres, projectedY).Low+yIntervalOffset;
         int bottom = getDarkEnoughLastInterval(intWithoutNombres, projectedY).High+yIntervalOffset;
 
         Rect checkRegion = new Rect(BLANK_IGNORE_LEFT, top, checkRegionRight(), bottom);
-        int[] projectedX = analyzer.projectToX(checkRegion, ACC_LIMIT);
+        int[] localProjectedX = analyzer.projectToX(checkRegion, ACC_LIMIT);
         int xOffset = checkRegion.left;
         // TODO: should I change threshold of vertical and horizontal?
-        List<Interval> xIntervals = analyzer.splitToIntervalsWithMelt(projectedX, 1, 10);
+        List<Interval> localXIntervals = analyzer.splitToIntervalsWithMelt(localProjectedX, 1, 10);
 
-        if(xIntervals.size() == 0) {
+        if(localXIntervals.size() == 0) {
             return null;
         }
 
-        Interval leftInt = getDarkEnoughFirstInterval(xIntervals, projectedX);
-        Interval rightInt = getDarkEnoughLastInterval(xIntervals, projectedX);
+        Interval leftInt = getDarkEnoughFirstInterval(localXIntervals, localProjectedX);
+        Interval rightInt = getDarkEnoughLastInterval(localXIntervals, localProjectedX);
 
         return new Rect(leftInt.Low+xOffset, top, rightInt.High+xOffset, bottom);
     }
@@ -205,8 +272,27 @@ public class NovelAnalyzer {
         return null;
     }
 
+
+    private List<Interval> findNombreLikeIntervalsLTR() {
+        List<Interval> res = new ArrayList<Interval>();
+        if(!enableRemoveNombre)
+            return res;
+
+        int nombreMaxWidth = Math.max(DEFAULT_NOMBRE_MAX_HEIGHT, target.getWidth()/20);
+        for(Interval interval : xIntervals) {
+            if(interval.High+ xIntervalOffset < target.getWidth()*0.2 && interval.getWidth() <= nombreMaxWidth)
+            {
+                res.add(interval);
+            } else if(interval.High+ xIntervalOffset > target.getWidth()*0.8 && interval.getWidth() <= nombreMaxWidth) {
+                res.add(interval);
+            }
+        }
+
+        return res;
+    }
+
     // make public for test purpose.
-    public List<Interval> findNombreLikeIntervals() {
+    public List<Interval> findNombreLikeIntervalsTTB() {
         List<Interval> res = new ArrayList<Interval>();
         if(!enableRemoveNombre)
             return res;
@@ -218,7 +304,7 @@ public class NovelAnalyzer {
             if(interval.High+yIntervalOffset < target.getHeight()*0.2 && interval.getWidth() <= nombreMaxHeight)
             {
                 res.add(interval);
-            } else if(interval.Low+yIntervalOffset > target.getHeight()*0.8 && interval.getWidth() <= DEFAULT_NOMBRE_MAX_HEIGHT) {
+            } else if(interval.Low+yIntervalOffset > target.getHeight()*0.8 && interval.getWidth() <= nombreMaxHeight) {
                 res.add(interval);
             }
         }
