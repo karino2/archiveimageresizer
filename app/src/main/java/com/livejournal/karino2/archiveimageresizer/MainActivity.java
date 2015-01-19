@@ -35,10 +35,14 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
 
         Intent intent = getIntent();
-        if(intent != null && intent.getAction() != null &&intent.getAction().equals(Intent.ACTION_VIEW))
-        {
-            Uri uri = intent.getData();
-            setTextToEditText(R.id.editTextFileUrl, uri.getPath());
+        if(intent != null && intent.getAction() != null) {
+            if (intent.getAction().equals(Intent.ACTION_VIEW)) {
+                Uri uri = intent.getData();
+                setTextToEditText(R.id.editTextFileUrl, uri.getPath());
+            }else if(intent.getAction().equals(Intent.ACTION_SEND)) {
+                Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                setTextToEditText(R.id.editTextFileUrl, uri.getPath());
+            }
         }
 
         setOnClickListenerToButton(R.id.buttonBrowse, new View.OnClickListener() {
