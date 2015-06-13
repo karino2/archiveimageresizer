@@ -181,13 +181,17 @@ public class ZipConverter {
 
 
     ZipEntry getNext() {
-        ZipEntry ent = entries.nextElement();
-        while(notImage(ent)) {
-            ent = entries.nextElement();
-            if(ent == null)
-                throw new ArrayIndexOutOfBoundsException();
+        try {
+            ZipEntry ent = entries.nextElement();
+            while (notImage(ent)) {
+                ent = entries.nextElement();
+                if (ent == null)
+                    throw new ArrayIndexOutOfBoundsException();
+            }
+            return ent;
+        }catch(java.util.NoSuchElementException e) {
+            throw new ArrayIndexOutOfBoundsException();
         }
-        return ent;
     }
     public void skipUntilStart(int skipUntil) {
         for(int i = 0; i < skipUntil; i++) {
