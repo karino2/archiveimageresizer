@@ -1,5 +1,6 @@
 package com.livejournal.karino2.archiveimageresizer;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,6 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -20,8 +22,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ArchiveConversionService extends Service {
@@ -341,6 +346,21 @@ public class ArchiveConversionService extends Service {
             deleteAllFiles(dir);
         }
 
+        @TargetApi(24)
+        ZipFile newZipFile(String path) throws IOException {
+
+            try {
+                ZipFile tmp = new ZipFile(path);
+                Enumeration<? extends ZipEntry> entries = tmp.entries();
+                ZipEntry ent = entries.nextElement();
+                tmp.close();
+
+                return new ZipFile(path);
+            }catch(IllegalArgumentException e) {
+                return new ZipFile(path, Charset.forName("Cp437"));
+            }
+        }
+
 
         private void convertingImages(String zipPath) throws IOException {
             RenderScript rs = RenderScript.create(ArchiveConversionService.this);
@@ -348,7 +368,13 @@ public class ArchiveConversionService extends Service {
 
 
             ZipConverter converter = new ZipConverter(rs, script);
-            converter.startConversion(getSetting(), new ZipFile(zipPath), getFileStoreDirectory());
+            ZipFile zipfile;
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                zipfile = newZipFile(zipPath);
+            } else {
+                zipfile = new ZipFile(zipPath);
+            }
+            converter.startConversion(getSetting(), zipfile, getFileStoreDirectory());
 
             publishProgress(0, converter.getPageNum());
 
